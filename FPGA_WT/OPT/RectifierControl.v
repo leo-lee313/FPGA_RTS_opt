@@ -1,0 +1,405 @@
+`include "../parameter/global_parameter.v"
+
+module RectifierControl(
+			 clk,
+			 rst,
+			 sta,
+			 sta_Idtemp,
+          sta_theta,			 
+          sta_user,
+          rst_user,
+          control_valuation_sig,		 
+          Pref,
+          P_PM,         
+          Id,
+          Iq,
+          theta,
+          wm,			 
+			 
+			 m1,
+			 m2,
+			 m3,
+			 m4,
+			 m5,
+			 m6,
+			 done_sig
+			);
+			
+input clk;
+input rst;
+input rst_user;
+input sta;
+input wire sta_theta;
+input wire sta_Idtemp;
+input sta_user;
+input control_valuation_sig;
+input [`SINGLE - 1:0] Pref;
+input [`SINGLE - 1:0] P_PM;
+input wire [`EXTENDED_SINGLE - 1:0] Id;
+input wire [`EXTENDED_SINGLE - 1:0] Iq;
+input [`SINGLE - 1:0] theta;
+input [`SINGLE - 1:0] wm;
+
+output m1;
+output m2;
+output m3;
+output m4;
+output m5;
+output m6;
+output done_sig;
+wire [`EXTENDED_SINGLE - 1:0] diq;
+wire [`EXTENDED_SINGLE - 1:0] vqref1;
+wire [`EXTENDED_SINGLE - 1:0] vqref1_temp;
+wire [`EXTENDED_SINGLE - 1:0] Pref_temp;
+wire [`EXTENDED_SINGLE - 1:0] P_temp;
+wire [`EXTENDED_SINGLE - 1:0] Id1_temp;
+wire [`EXTENDED_SINGLE - 1:0] Iq1_temp;
+wire [`SINGLE - 1:0] vqref;
+wire [`SINGLE - 1:0] iqref_single;
+wire [`SINGLE - 1:0] P;
+wire [`SINGLE - 1:0] sin;
+wire [`SINGLE - 1:0] cos;
+wire [`SINGLE - 1:0] theta;			  						 						 						  
+wire [`EXTENDED_SINGLE - 1:0] iqref1;
+wire [`EXTENDED_SINGLE - 1:0] iqref;
+wire [`SINGLE - 1:0] vdref;
+wire [`EXTENDED_SINGLE - 1:0] vdref_temp;
+wire [`EXTENDED_SINGLE - 1:0] vdref1;
+wire [`SINGLE - 1:0] ma;
+wire [`SINGLE - 1:0] mb;
+wire [`SINGLE - 1:0] mc;
+wire [`SINGLE - 1:0] triangle_out;
+wire done_sig_threshold1;
+wire done_sig_threshold13;
+wire done_sig_threshold14;
+wire done_sig_multiplierP;
+wire done_sig_dq02abc;
+wire done_sig_control_loop1;
+wire done_sig_PWM;
+wire done_sig_comparator_ma;
+wire done_sig_comparator_mb;
+wire sig_start_pwm;
+wire done_sig_multiplierId1;
+wire done_sig_multiplierIq1;
+wire done_sig_multiplierIq1_temp;
+wire done_sig_PI1;
+wire done_sig_double2single_a2;
+
+parameter const_inv_Sbase = 32'h380BCF65;//1/30000
+parameter const_Ten = 32'h41200000;
+parameter idref = 64'h0000000000000000;
+//const1 is 0.005
+parameter const1 = 64'h3F747AE147AE147B;
+
+multiplier_control_system_dsp  multiplier_control_system0(
+					.clk(clk),
+					.rst(rst),
+					.sta(sta_Idtemp),
+					.x(P_PM),
+					.y(const_inv_Sbase),
+					
+					.xy(P),
+					.done_sig(done_sig_multiplierP)
+										  );
+										  
+multiplier_control_system64_dsp  multiplier_control_system1(
+					.clk(clk),
+					.rst(rst),
+					.sta(sta_Idtemp),
+					.x(Id),
+					.y(const1),
+					
+					.xy(Id1_temp),
+					.done_sig(done_sig_multiplierId1)
+										  );										  
+										  
+										  
+
+multiplier_control_system64_dsp  multiplier_control_system2(
+					.clk(clk),
+					.rst(rst),
+					.sta(sta_Idtemp),
+					.x(Iq),
+					.y(const1),
+					
+					.xy(Iq1_temp),
+					.done_sig(done_sig_multiplierIq1)
+										  );
+convert_single_to_double_control_system  single2float1(
+                                               .clk(clk),
+															  .rst(rst),
+															  .sta(sta),
+															  .x(Pref),
+															  .y(Pref_temp),
+															  .done_sig(done_sig_multiplierIq1_temp)
+															  );											  
+
+wire done_sig_multiplierIq1_temp1;
+	
+convert_single_to_double_control_system  single2float2(
+                                               .clk(clk),
+															  .rst(rst),
+															  .sta(sta),
+															  .x(P),
+															  .y(P_temp),
+															  .done_sig(done_sig_multiplierIq1_temp1)
+															  );	
+	
+
+/*	
+convert_single_to_double_control_system  single2float3(
+                                               .clk(clk),
+															  .rst(rst),
+															  .sta(done_sig_multiplierIq1),
+															  .x(Id1),
+															  .y(Id1_temp),
+															  .done_sig(done_sig_multiplierIq1_temp2)
+															  );	
+	
+convert_single_to_double_control_system  single2float4(
+                                               .clk(clk),
+															  .rst(rst),
+															  .sta(done_sig_multiplierIq1),
+															  .x(Iq1),
+															  .y(Iq1_temp),
+															  .done_sig(done_sig_multiplierIq1_temp3)
+															  );
+*/
+	
+	
+
+	
+////////////////////////////////////////////////////////////////////
+wire [`EXTENDED_SINGLE - 1:0] dPddd3;
+wire [`EXTENDED_SINGLE - 1:0] diqqq3;
+wire donesig_Adder_inner_resultddd3;
+wire donesig_Adder_inner_resultqqq3;
+ADD_SUB_64_MODULE   Adder_inner_resultddd3(
+
+			 .sta(done_sig_multiplierIq1_temp),
+			 .rst_control(rst),
+			 .add_sub(`sub),
+			 .clk(clk),
+			 .dataa(P_temp),			 			 			 
+			 .datab(Pref_temp),
+			 
+			 .result(dPddd3),
+			 .done_sig(donesig_Adder_inner_resultddd3)
+		   );	
+
+ADD_SUB_64_MODULE   Adder_inner_resultqqq3(
+
+			 .sta(done_sig_multiplierIq1_temp),
+			 .rst_control(rst),
+			 .add_sub(`sub),
+			 .clk(clk),
+			 .dataa(idref),			 			 			 
+			 .datab(Id1_temp),
+			 
+			 .result(diqqq3),
+			 .done_sig(donesig_Adder_inner_resultqqq3)
+		   );	
+
+
+PI_limit64 #(64'h3FE0000000000000,64'h3EDF75104D551D69,64'h3FF8000000000000,64'hBFF8000000000000)PIddd1(
+					 .clk(clk),
+			       .rst(rst),
+			       .rst_user(rst_user),
+					 .control_valuation_sig(control_valuation_sig),
+					 .sta(donesig_Adder_inner_resultddd3),
+					 .x(dPddd3),
+						  
+					 .y(iqref),
+					 .done_sig(done_sig_threshold13)
+					);//30
+
+				
+PI_limit64 #(64'h4010000000000000,64'h3F13A92A30553261,64'h3FF8000000000000,64'hBFF8000000000000)PIqqq1(
+					 .clk(clk),
+			       .rst(rst),
+			       .rst_user(rst_user),
+					 .control_valuation_sig(control_valuation_sig),
+					 .sta(donesig_Adder_inner_resultqqq3),
+					 .x(diqqq3),
+						  
+					 .y(vdref_temp),
+					 .done_sig(done_sig_threshold14)
+					);
+				 		 
+					 
+convert_double_to_single_control_system   double2single_a112(
+                                               .clk(clk),
+															  .rst(rst),
+															  //.sta(done_sig_threshold1),
+															  .x(vdref_temp),
+															  .y(vdref)
+															  //.done_sig(done_sig_double2single_a2)
+															  );					 
+convert_double_to_single_control_system   double2single_a124(
+                                               .clk(clk),
+															  .rst(rst),
+															  //.sta(done_sig_threshold1),
+															  .x(iqref),
+															  .y(iqref_single)
+															  //.done_sig(done_sig_double2single_a2)
+															  );					 
+	
+	
+
+
+wire donesig_Adder_inner_result3;
+	
+ADD_SUB_64_MODULE   Adder_inner_result3(
+
+			 .sta(done_sig_threshold13),
+			 .rst_control(rst),
+			 .add_sub(`sub),
+			 .clk(clk),
+			 .dataa(iqref),			 			 			 
+			 .datab(Iq1_temp),
+			 
+			 .result(diq),
+			 .done_sig(donesig_Adder_inner_result3)
+		   );
+			
+
+PI_limit64 #(64'h4010000000000000,64'h3F13A92A30553261,64'h3FF8000000000000,64'hBFF8000000000000)PI1(
+					 .clk(clk),
+			       .rst(rst),
+			       .rst_user(rst_user),
+					 .control_valuation_sig(control_valuation_sig),
+					 .sta(donesig_Adder_inner_result3),
+					 .x(diq),
+						  
+					 .y(vqref1_temp),
+					 .done_sig(done_sig_threshold1)
+					);
+
+			 
+convert_double_to_single_control_system   double2single_a2(
+                                               .clk(clk),
+															  .rst(rst),
+															  .sta(done_sig_threshold1),
+															  .x(vqref1_temp),
+															  .y(vqref),
+															  .done_sig(done_sig_double2single_a2)
+															  );
+wire done_sig_sin1;
+wire done_sig_cos1;
+															  
+Sin_control_system   Sin_1(
+							.clk(clk),
+							.rst(rst),
+							.sta(sta_theta),
+							.theta(theta),
+							 		
+							.sin(sin),
+							.done_sig(done_sig_sin1)
+								);
+															
+Cos_control_system  Cos_1(
+							.clk(clk),
+							.rst(rst),
+							.sta(sta_theta),
+							.theta(theta),
+							 			
+							.cos(cos),
+							.done_sig(done_sig_cos1)
+								);	
+
+
+				
+dq02abc dq02abc1(
+					.clk(clk),
+					.rst(rst),
+					.sta(done_sig_double2single_a2),
+					.Vd(vdref),
+					.Vq(vqref),
+					.sin_theta(sin),
+					.cos_theta(cos),
+					
+					.Va(ma),
+					.Vb(mb),
+					.Vc(mc),
+					.done_sig(done_sig_dq02abc)
+				  );
+/*				  
+DELAY_1CLK  #(12) Delay_DONE_SIG91(
+										  	.clk(clk),
+											.rst(rst),
+											.d(done_sig_double2single_a2),
+											.q(sig_start_pwm)
+										  );										 
+									  
+PWM #(3'b001,32'd24,32'd1,32'd0,32'h3D23D70A,3'b000,3'b001,3'b010,3'b011,3'b100) PWM(
+		  .clk(clk),
+		  .rst(rst),
+	 	  .rst_user(rst_user),
+		  .sta(sig_start_pwm),
+		  .sta_user(sta_user),
+		  
+	     .triangle_out(triangle_out),
+		  .done_sig(done_sig_PWM)
+		 );
+*/	
+
+
+	 
+DELAY_1CLK  #(12) Delay_DONE_SIG91(
+										  	.clk(clk),
+											.rst(rst),
+											.d(done_sig_double2single_a2),
+											.q(sig_start_pwm)
+										  );
+
+										  
+///PWM #(3'b001,32'd4,32'd1,32'd0,32'h3E4CCCCD,3'b000,3'b001,3'b010,3'b011,3'b100) PWM(										  
+//3'b001,32'd18,32'd1,32'd0,32'h3D638E39,3'b000,3'b001,3'b010,3'b011,3'b100										 
+PWM #(3'b001,32'd31,32'd1,32'd0,32'h3D000000,3'b000,3'b001,3'b010,3'b011,3'b100) PWM(
+		  .clk(clk),
+		  .rst(rst),
+	 	  .rst_user(rst_user),
+		  .sta(sig_start_pwm),
+		  .sta_user(sta_user),
+		  
+	     .triangle_out(triangle_out),
+		  .done_sig(done_sig_PWM)
+		 );
+		 	 
+	 
+Comparator Comparator_Va(
+								 .clk(clk),
+								 .rst(rst),
+								 .sta(done_sig_PWM),
+								 .input_1(ma),
+								 .input_2(triangle_out),
+								 .output_1(m1),
+								 .output_2(m2),
+								 .done_sig(done_sig_comparator_ma)
+							   );
+								
+Comparator Comparator_Vb(
+								 .clk(clk),
+								 .rst(rst),
+								 .sta(done_sig_PWM),
+								 .input_1(mb),
+								 .input_2(triangle_out),
+								 .output_1(m3),
+								 .output_2(m4),
+							   .done_sig(done_sig_comparator_mb)
+							   );
+								
+Comparator Comparator_Vc(
+								 .clk(clk),
+								 .rst(rst),
+								 .sta(done_sig_PWM),
+								 .input_1(mc),
+								 .input_2(triangle_out),
+								 .output_1(m5),
+								 .output_2(m6),
+								 .done_sig(done_sig)
+							   );
+
+										
+							
+endmodule				  

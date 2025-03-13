@@ -1,0 +1,43 @@
+`include "../parameter/global_parameter.v"
+module Dingshi(			 		 
+			 sta_user,
+			 control_valuation_sig, 
+          Tm_temp,			 
+			 Tm			
+			);
+			
+input sta_user;
+input control_valuation_sig;
+input [`SINGLE - 1:0] Tm_temp;			
+output [`SINGLE - 1:0] Tm;
+reg [`SINGLE - 1:0] Tm11;
+parameter constw=32'hC1F00000;
+parameter constq=32'd20000;
+reg [`SINGLE - 1:0] counter;
+
+always@(posedge sta_user or posedge control_valuation_sig)
+begin
+    if(sta_user==1'b1)
+	  begin
+	    Tm11<=constw;
+		 counter<=32'd0;
+     end
+	 else if((control_valuation_sig==1'b1)&(counter!=constq))
+	   begin
+		 counter<=counter+1;		
+	   end
+    else	if((control_valuation_sig==1'b1)&(counter==constq))	
+     begin
+	    Tm11<=Tm_temp;
+		 counter<=constq; 
+     end
+end
+assign Tm=Tm11;
+endmodule
+
+
+
+
+
+
+

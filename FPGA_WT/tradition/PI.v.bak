@@ -1,0 +1,88 @@
+`include "H:/altera/11.1/PLL_verify/parameter/global_parameter.v"
+
+module PI(
+			 clk,
+			 rst,
+			 sta,
+			 x,
+			 y,
+			 inner_result1,
+			 inner_result2,
+			 inner_result3,
+			 x_reg,
+			 y_reg
+		   );
+
+parameter A = 32'h3f800000;
+parameter B = 32'h3f800000;
+
+input clk;
+input rst;
+input sta;
+input [`SINGLE - 1:0] x;
+
+output [`SINGLE - 1:0] inner_result1;
+output [`SINGLE - 1:0] y;
+
+output [`SINGLE - 1:0] inner_result2;
+output [`SINGLE - 1:0] inner_result3;
+
+output [`SINGLE - 1:0] x_reg;
+output [`SINGLE - 1:0] y_reg;
+//reg [`SINGLE - 1:0] x_reg;
+//reg [`SINGLE - 1:0] y_reg;
+
+MULT	Multiplier_inner_result1(
+										 .aclr(rst),
+										 .clk_en(`ena_math),
+										 .clock(clk),
+										 .dataa(A),
+										 .datab(x),
+										 .result(inner_result1)
+										);
+										
+MULT	Multiplier_inner_result2(
+										 .aclr(rst),
+										 .clk_en(`ena_math),
+										 .clock(clk),
+										 .dataa(B),
+										 .datab(x_reg),
+										 .result(inner_result2)
+										);
+	
+ADD	Adder_inner_result3(
+								  .aclr(rst),
+								  .clk_en(`ena_math),
+								  .clock(clk),
+								  .dataa(inner_result1),
+								  .datab(inner_result2),
+								  .result(inner_result3)
+								 );
+
+ADD	Adder_inner_result4(
+								  .aclr(rst),
+								  .clk_en(`ena_math),
+								  .clock(clk),
+								  .dataa(inner_result3),
+								  .datab(y_reg),
+								  .result(y)
+								 );
+
+System_partition Storage_x(
+									.clk(clk),
+									.rst(rst),
+									.solve_end(sta),
+									.cin(x),
+									.cout(x_reg)
+								  );
+														 
+System_partition Storage_y(
+									.clk(clk),
+									.rst(rst),
+									.solve_end(sta),
+									.cin(y),
+									.cout(y_reg)
+								  );
+	
+endmodule
+	

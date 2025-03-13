@@ -1,0 +1,14 @@
+sin_reg_PLL	6	1
+cos_reg_PLL	7	1
+y_reg_PLL_PI1	1	6
+y_reg_PLL_PI2	11	THETA_PLL
+x_reg_PLL_PI1	1	4
+x_reg_PLL_PI2	1	6
+x_reg_OUT_PI1	1	24
+x_reg_OUT_PI2	1	25
+y_reg_OUT_PI1	1	27
+y_reg_OUT_PI2	1	29
+y_reg_IN_PI1	1	33
+y_reg_IN_PI2	1	35
+x_reg_IN_PI1	1	30
+x_reg_IN_PI2	1	31

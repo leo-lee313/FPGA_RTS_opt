@@ -1,0 +1,51 @@
+`include "../parameter/global_parameter.v"
+
+module WindGEN(			 		 		 
+			 sta_user,
+			 control_valuation_sig, 
+          			 
+			 VWind			
+			);
+		
+input sta_user;
+input control_valuation_sig;
+output [`SINGLE - 1:0] VWind;
+reg [`SINGLE - 1:0] VWind11;
+reg [`SINGLE - 1:0] counter;
+parameter consttwo=32'd4;
+parameter constfour=32'd6;
+//wind1 is 9.7
+parameter wind1 = 32'h411B3333;
+//wind2 is 12
+parameter wind2 = 32'h41400000;
+//wind3 is 14
+parameter wind3 = 32'h41600000;
+
+
+
+
+always@(posedge sta_user or posedge control_valuation_sig)
+begin
+    if(sta_user==1'b1)
+	  begin
+	    VWind11<=wind1;
+		 counter<=32'd0;
+     end
+	 else if((control_valuation_sig==1'b1)&(counter<consttwo))
+	   begin
+		 counter<=counter+1;
+	   end
+	 else if((control_valuation_sig==1'b1)&(counter>=consttwo)&(counter<constfour))
+	   begin
+		 counter<=counter+1;
+		 VWind11<=wind2;
+	   end
+    else	if((control_valuation_sig==1'b1)&(counter==constfour))	
+     begin
+	    VWind11<=wind3;
+		 counter<=constfour; 
+     end
+end
+assign VWind=VWind11;
+
+endmodule

@@ -1,0 +1,11 @@
+module control_loop(
+						  clk,
+						  rst,
+						  sta,
+						  input_1,
+						  reg_1,
+						  input_2,
+						  reg_2,
+						  output_1,
+						  output_2
+						 );

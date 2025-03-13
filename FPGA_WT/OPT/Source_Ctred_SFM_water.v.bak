@@ -1,0 +1,218 @@
+`include "../parameter/global_parameter.v"
+
+module Source_Ctred_SFM_water (
+				  clk,
+				  rst_user,
+				  rst,
+				  sta,
+			
+				  Va,
+				  Vb,
+				  Vc,
+				  Ia,
+				  Ib,
+				  Ic,
+				  P,
+				  
+				  
+				  done_sig
+				 );
+
+
+input clk;
+input rst;
+input rst_user;
+input sta;
+
+input [`SINGLE - 1:0] Va;
+input [`SINGLE - 1:0] Vb;
+input [`SINGLE - 1:0] Vc;
+input [`SINGLE - 1:0] Ia;
+input [`SINGLE - 1:0] Ib;
+input [`SINGLE - 1:0] Ic;
+
+
+wire [`SINGLE - 1:0] inner_result_1;
+wire [`SINGLE - 1:0] inner_result_2;
+wire [`SINGLE - 1:0] inner_result_3;
+wire [`SINGLE - 1:0] inner_result_4;
+wire [`SINGLE - 1:0] inner_result_3_delay;
+wire [`SINGLE - 1:0] P2;
+wire [`SINGLE - 1:0] P3;
+wire [`SINGLE - 1:0] P4;
+wire [`SINGLE - 1:0] P2_delay;
+wire [`SINGLE - 1:0] P_filterless;
+wire done_sig_P1;
+wire done_sig_P2;
+wire done_sig_P1_delay;
+wire done_read_x;
+output [`SINGLE - 1:0] P;
+output done_sig;
+
+parameter const_50 = 32'h42480000;//50.000000
+
+DELAY_1CLK  #(19) Delay_DONE_SIG(
+										  	.clk(clk),
+											.rst(rst),
+											.d(sta),
+											.q(done_sig_P1)
+										  );
+DELAY_1CLK  #(9) Delay_DONE_SIG01(
+										  	.clk(clk),
+											.rst(rst),
+											.d(sta),
+											.q(done_read_x)
+										  );
+//P1
+//Va*Ia
+
+Multiplier_nodsp_dsp	Multiplier_inner_result1(
+														 .aclr(rst),
+														 .clk_en(`ena_math),
+														 .clock(clk),
+														 .dataa(Va),
+														 .datab(Ia),
+														 .result(inner_result_1)
+														);
+														
+//Vb*Ib
+Multiplier_nodsp_dsp	Multiplier_inner_result2(
+														 .aclr(rst),
+														 .clk_en(`ena_math),
+														 .clock(clk),
+														 .dataa(Vb),
+														 .datab(Ib),
+														 .result(inner_result_2)
+														);
+														
+//Vc*Ic														
+Multiplier_nodsp_dsp	Multiplier_inner_result4(
+														 .aclr(rst),
+														 .clk_en(`ena_math),
+														 .clock(clk),
+														 .dataa(Vc),
+														 .datab(Ic),
+														 .result(inner_result_3)
+														);														
+																												
+//Va*Ia+ Vb*Ib
+Adder_nodsp	Adder_inner_result_3(
+											.aclr(rst),
+											.clk_en(`ena_math),
+											.add_sub(`add),
+											.clock(clk),
+											.dataa(inner_result_1),
+											.datab(inner_result_2),
+											.result(inner_result_4)
+										  );
+										  
+DELAY_NCLK  #(32,7)  DELAY_NCLK0(
+						               .clk(clk),
+											.rst(rst),
+						               .d(inner_result_3),
+						               .q(inner_result_3_delay)
+					                 );										  
+										  
+								  
+//P1
+Adder_nodsp	Adder_inner_result_4(
+											.aclr(rst),
+											.clk_en(`ena_math),
+											.add_sub(`add),
+											.clock(clk),
+											.dataa(inner_result_4),
+											.datab(inner_result_3_delay),
+											.result(P_filterless)
+										  );
+//////////////////////////////////////////////////////////////////////
+
+//////////////////////////////////////////////////////////////////////////////
+
+PI_limit_water  #(32'h00000000,32'h35C9539C,32'h60AD78EC,32'hE0AD78EC) PI_P1(
+					.clk(clk),
+					.rst(rst),
+					.rst_user(rst_user),
+					.sta(done_sig_P1),
+					.done_read_x(done_read_x),
+					.x(P_filterless),
+					
+				   .y(P2),
+					.done_sig(done_sig_P2)
+					);
+////////////////////////////////////////////////////////////////////////////////////
+
+/////////////////////////////////////////////////////////////////////////////////
+DELAY_NCLK  #(32,2)  DELAY_NCLK101(
+						               .clk(clk),
+											.rst(rst),
+						               .d(P2),
+						               .q(P2_delay)
+					                 );
+										  
+DELAY_1CLK  #(28) Delay_DONE_SIG1011(
+										  	.clk(clk),
+											.rst(rst),
+											.d(done_sig_P1),
+											.q(done_sig_P1_delay)
+										  );
+										  
+Delay_control_system_water   Delay_mean(
+											.clk(clk),
+											.rst(rst),
+											.rst_user(rst_user),
+											.sta(done_sig_P1_delay),
+											.x(P2),
+											
+											.y(P3)
+											);
+											
+										 
+Adder_nodsp	adder_P4(
+						.aclr(rst),
+						.add_sub(`sub),
+						.clk_en(`ena_math),
+						.clock(clk),
+						.dataa(P2_delay),
+						.datab(P3),
+						.result(P4)								 
+					  );
+					  
+Multiplier_nodsp_dsp	multiplier_P5(
+														 .aclr(rst),
+														 .clk_en(`ena_math),
+														 .clock(clk),
+														 .dataa(P4),
+														 .datab(const_50),
+														 .result(P)
+														);
+
+DELAY_1CLK  #(16) Delay_DONE11(
+										  .clk(clk),
+										  .rst(rst),
+										  .d(done_sig_P1_delay),
+										  .q(done_sig)
+										 );
+										 
+										 
+										 
+/////////////////////////////////////////////////////////////////////////////////
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+endmodule
+
+
+
+

@@ -1,0 +1,6 @@
+1	45	0	triangle_out_lyf
+1	46	0	triangle_out_lyf
+1	47	0	triangle_out_lyf
+1	95	0	triangle_out_inv_lyf
+1	96	0	triangle_out_inv_lyf
+1	97	0	triangle_out_inv_lyf

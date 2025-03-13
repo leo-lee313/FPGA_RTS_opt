@@ -1,0 +1,845 @@
+`include "../parameter/Global_parameter.v"
+
+module Control_System(
+							 clk,
+							 sta,
+							 sta_user,
+							 rst,
+							 rst_user,
+							 control_valuation_sig,
+							 exchange_data_sig,
+							 V_METERVI,
+							 addr_input_v_r,
+							 pulse_input_v_r,
+							 ena_input_v_r,
+							 step_input_v_r,
+							 ena_cal_input_v_r,
+							 V,
+							 addr_input_v_r_d,
+							 ena_cal_input_v_r_d,
+							 V_s,
+							 sta_interface,
+							 addr_input_v_w,
+							 pulse_input_v_w,
+							 ena_input_v_w,
+							 step_input_v_w,
+							 ena_cal_input_v_w,
+							
+							 Va,
+							 Vb,
+							 Vc,
+							 Ia,
+							 Ib,
+							 Ic,
+							 Vdc,
+							 
+							 Va_pu,
+							 Vb_pu,
+							 Vc_pu,
+							 done_sig_Va_pu,
+							 done_sig_Vb_pu,
+							 done_sig_Vc_pu,
+
+							 inner_result_1,
+							 inner_result_2,
+							 inner_result_3,
+							 inner_result_4,
+							 inner_result_5,
+							 inner_result_6,
+							 multiplier_inner_result5_multiply_cos1,
+							 multiplier_inner_result5_multiply_cos2,
+							 multiplier_inner_result5_multiply_cos3,
+							 sig1,
+							 sig2,
+							 sig3,
+					
+							 inner_result_7,
+							 inner_result_8,
+							 multiplier_inner_result7_multiply_sin1,
+							 multiplier_inner_result7_multiply_sin2,
+							 multiplier_inner_result7_multiply_sin3,
+							 sig4,
+							 sig5,
+							 sig6,
+							 inner_result_9,
+							 inner_result_10,
+							 inner_result1_PLL1,
+							 inner_result2_PLL1,
+							 inner_result3_PLL1,
+							 inner_result1_PLL2,
+							 inner_result2_PLL2,
+							 inner_result3_PLL2,
+
+						 	 x_reg_PLL1,
+							 x_reg_PLL2,
+						 	 y_reg_PLL1,
+							 y_reg_PLL2,
+						
+							 frequence,
+							 theta,
+							 sin,
+							 cos,
+							 sin_reg,
+							 cos_reg,
+							 done_sig_PLL,
+							 
+							 inner_result_1_abc2dq0_V,
+							 inner_result_2_abc2dq0_V,
+							 inner_result_3_abc2dq0_V,
+							 inner_result_4_abc2dq0_V,
+							 inner_result_5_abc2dq0_V,
+							 inner_result_6_abc2dq0_V,
+							 inner_result_7_abc2dq0_V,
+							 inner_result_8_abc2dq0_V,
+							 inner_result_9_abc2dq0_V,
+							 inner_result_10_abc2dq0_V,
+							 inner_result_11_abc2dq0_V,
+							 Vd_abc2dq0,
+							 Vq_abc2dq0,
+							 done_sig_abc2dq0_V,
+							 
+							 inner_result_1_abc2dq0_I,
+							 inner_result_2_abc2dq0_I,
+							 inner_result_3_abc2dq0_I,
+							 inner_result_4_abc2dq0_I,
+							 inner_result_5_abc2dq0_I,
+							 inner_result_6_abc2dq0_I,
+							 inner_result_7_abc2dq0_I,
+							 inner_result_8_abc2dq0_I,
+							 inner_result_9_abc2dq0_I,
+							 inner_result_10_abc2dq0_I,
+							 inner_result_11_abc2dq0_I,
+							 Id_abc2dq0,
+							 Iq_abc2dq0,
+							 done_sig_abc2dq0_I,
+							 
+							 P,
+							 Q,
+							 done_sig_PQ_cal,
+							 
+							 Id_ref,
+							 Iq_ref,
+							 error_1_outer,
+							 error_2_outer,
+							 inner_result1_PI1_outer,
+							 inner_result2_PI1_outer,
+							 inner_result3_PI1_outer,
+							 x_reg_PI1_outer,
+							 y_reg_PI1_outer,
+							 inner_result1_PI2_outer,
+							 inner_result2_PI2_outer,
+							 inner_result3_PI2_outer,
+							 x_reg_PI2_outer,
+							 y_reg_PI2_outer,
+							 done_sig_outer_loop,
+
+							 Vd_ref,
+							 Vq_ref,		  
+							 error_1_inner,
+							 error_2_inner,
+							 inner_result1_PI1_inner,
+							 inner_result2_PI1_inner,
+							 inner_result3_PI1_inner,
+							 x_reg_PI1_inner,
+							 y_reg_PI1_inner,
+							 inner_result1_PI2_inner,
+							 inner_result2_PI2_inner,
+							 inner_result3_PI2_inner,
+							 x_reg_PI2_inner,
+							 y_reg_PI2_inner,
+							 done_sig_inner_loop,
+
+							 inner_result_1_dq02abc,
+							 inner_result_2_dq02abc,
+							 inner_result_3_dq02abc,
+							 inner_result_4_dq02abc,
+							 inner_result_5_dq02abc,
+							 inner_result_6_dq02abc,
+							 inner_result_7_dq02abc,
+							 inner_result_8_dq02abc,
+							 inner_result_9_dq02abc,
+							 inner_result_10_dq02abc,
+							 inner_result_11_dq02abc,
+							 inner_result_12_dq02abc,
+							 inner_result_13_dq02abc,
+							 inner_result_14_dq02abc,
+							 Va_ref,
+							 Vb_ref,
+							 Vc_ref,
+							 done_sig_dq02abc,
+
+							 Va_compare,
+							 done_sig_Va_compare,
+							 Vb_compare,
+							 done_sig_Vb_compare,
+							 Vc_compare,
+							 done_sig_Vc_compare,
+							 
+							 count_integer,
+							 count_float,
+							 triangle_out,
+							 triangle_out_Amplitude,
+							 curr_state,
+							 next_state,
+							 end_STATE_I,
+							 end_STATE_II,
+							 end_STATE_III,
+							 end_STATE_IV,
+							 done_sig_PWM,
+							 
+							 pwm_1,
+							 pwm_4,
+							 done_sig_comparator_Va,
+							 pwm_3,
+							 pwm_6,
+							 done_sig_comparator_Vb,
+							 pwm_5,
+							 pwm_2,
+							 done_sig_comparator_Vc,
+							 
+							 control_solve_end_sig,
+							 
+							 Sig_o,
+							 addr_output_signal_w,
+							 pulse_output_signal_w,
+							 ena_output_signal_w,
+							 step_output_signal_w,
+							 ena_cal_output_signal_w,
+							 gate_signal
+							);
+							
+parameter const_inv_20 = 32'h3D4CCCCD;
+parameter const_Vdc_ref = 32'h43af0000;
+parameter const_Q_ref = 32'h00000000;
+parameter const_inv_Vdc_ref = 32'h3b3b3ee7;
+
+input clk;
+input sta;
+input sta_user;
+input rst;
+input rst_user;
+input control_valuation_sig;
+input exchange_data_sig;
+input [31:0] V_METERVI;
+
+output [`ADDR_WIDTH_INPUT_V - 1:0] addr_input_v_r;
+output pulse_input_v_r;
+output ena_input_v_r;
+output step_input_v_r;
+output ena_cal_input_v_r;
+output [31:0] V;
+output [`ADDR_WIDTH_INPUT_V - 1:0] addr_input_v_r_d;
+output ena_cal_input_v_r_d;
+output [31:0] V_s[`N_INPUT_V - 1:0];
+
+output sta_interface;
+output [`ADDR_WIDTH_INPUT_V - 1:0] addr_input_v_w;
+output pulse_input_v_w;
+output ena_input_v_w;
+output step_input_v_w;
+output ena_cal_input_v_w;
+
+output [31:0] Va;
+output [31:0] Vb;
+output [31:0] Vc;
+output [31:0] Ia;
+output [31:0] Ib;
+output [31:0] Ic;
+output [31:0] Vdc;
+output [31:0] Va_pu;
+output [31:0] Vb_pu;
+output [31:0] Vc_pu;
+
+output done_sig_Va_pu;
+output done_sig_Vb_pu;
+output done_sig_Vc_pu;
+
+//////////////////////////////////
+
+output [31:0] inner_result_1;
+output [31:0] inner_result_2;
+output [31:0] inner_result_3;
+output [31:0] inner_result_4;
+output [31:0] inner_result_5;
+output [31:0] inner_result_6;
+output [31:0] multiplier_inner_result5_multiply_cos1;
+output [31:0] multiplier_inner_result5_multiply_cos2;
+output [31:0] multiplier_inner_result5_multiply_cos3;
+output sig1;
+output sig2;
+output sig3;
+					
+output [31:0] inner_result_7;
+output [31:0] inner_result_8;
+output [31:0] multiplier_inner_result7_multiply_sin1;
+output [31:0] multiplier_inner_result7_multiply_sin2;
+output [31:0] multiplier_inner_result7_multiply_sin3;
+output sig4;
+output sig5;
+output sig6;
+output [31:0] inner_result_9;
+output [31:0] inner_result_10;
+output [31:0] inner_result1_PLL1;
+output [31:0] inner_result2_PLL1;
+output [31:0] inner_result3_PLL1;
+output [31:0] inner_result1_PLL2;
+output [31:0] inner_result2_PLL2;
+output [31:0] inner_result3_PLL2;
+
+output [31:0] x_reg_PLL1;
+output [31:0] x_reg_PLL2;
+output [31:0] y_reg_PLL1;
+output [31:0] y_reg_PLL2;
+					
+output [31:0] frequence;
+output [31:0] theta;	
+output [31:0] sin;
+output [31:0] cos;
+output [31:0] sin_reg;
+output [31:0] cos_reg;
+
+output done_sig_PLL;
+
+////////////////////////////////////////////////
+
+output [`SINGLE - 1:0] inner_result_1_abc2dq0_V;
+output [`SINGLE - 1:0] inner_result_2_abc2dq0_V;
+output [`SINGLE - 1:0] inner_result_3_abc2dq0_V;
+output [`SINGLE - 1:0] inner_result_4_abc2dq0_V;
+output [`SINGLE - 1:0] inner_result_5_abc2dq0_V;
+output [`SINGLE - 1:0] inner_result_6_abc2dq0_V;
+output [`SINGLE - 1:0] inner_result_7_abc2dq0_V;
+output [`SINGLE - 1:0] inner_result_8_abc2dq0_V;
+output [`SINGLE - 1:0] inner_result_9_abc2dq0_V;
+output [`SINGLE - 1:0] inner_result_10_abc2dq0_V;
+output [`SINGLE - 1:0] inner_result_11_abc2dq0_V;
+output [`SINGLE - 1:0] Vd_abc2dq0;
+output [`SINGLE - 1:0] Vq_abc2dq0;
+
+output done_sig_abc2dq0_V;
+
+////////////////////////////////////////////////
+
+output [`SINGLE - 1:0] inner_result_1_abc2dq0_I;
+output [`SINGLE - 1:0] inner_result_2_abc2dq0_I;
+output [`SINGLE - 1:0] inner_result_3_abc2dq0_I;
+output [`SINGLE - 1:0] inner_result_4_abc2dq0_I;
+output [`SINGLE - 1:0] inner_result_5_abc2dq0_I;
+output [`SINGLE - 1:0] inner_result_6_abc2dq0_I;
+output [`SINGLE - 1:0] inner_result_7_abc2dq0_I;
+output [`SINGLE - 1:0] inner_result_8_abc2dq0_I;
+output [`SINGLE - 1:0] inner_result_9_abc2dq0_I;
+output [`SINGLE - 1:0] inner_result_10_abc2dq0_I;
+output [`SINGLE - 1:0] inner_result_11_abc2dq0_I;
+output [`SINGLE - 1:0] Id_abc2dq0;
+output [`SINGLE - 1:0] Iq_abc2dq0;
+
+output done_sig_abc2dq0_I;
+
+/////////////////////////////////////////////////
+
+output [`SINGLE - 1:0] P;
+output [`SINGLE - 1:0] Q;
+output done_sig_PQ_cal;
+
+/////////////////////////////////////////////////
+
+output [`SINGLE - 1:0] Id_ref;
+output [`SINGLE - 1:0] Iq_ref;
+
+output [`SINGLE - 1:0] error_1_outer;
+output [`SINGLE - 1:0] error_2_outer;
+
+output [`SINGLE - 1:0] inner_result1_PI1_outer;
+output [`SINGLE - 1:0] inner_result2_PI1_outer;
+output [`SINGLE - 1:0] inner_result3_PI1_outer;
+output [`SINGLE - 1:0] x_reg_PI1_outer;
+output [`SINGLE - 1:0] y_reg_PI1_outer;
+
+output [`SINGLE - 1:0] inner_result1_PI2_outer;
+output [`SINGLE - 1:0] inner_result2_PI2_outer;
+output [`SINGLE - 1:0] inner_result3_PI2_outer;
+output [`SINGLE - 1:0] x_reg_PI2_outer;
+output [`SINGLE - 1:0] y_reg_PI2_outer;
+output done_sig_outer_loop;
+
+////////////////////////////////////////////////
+
+output [`SINGLE - 1:0] Vd_ref;
+output [`SINGLE - 1:0] Vq_ref;
+										  
+output [`SINGLE - 1:0] error_1_inner;
+output [`SINGLE - 1:0] error_2_inner;
+
+output [`SINGLE - 1:0] inner_result1_PI1_inner;
+output [`SINGLE - 1:0] inner_result2_PI1_inner;
+output [`SINGLE - 1:0] inner_result3_PI1_inner;
+output [`SINGLE - 1:0] x_reg_PI1_inner;
+output [`SINGLE - 1:0] y_reg_PI1_inner;
+
+output [`SINGLE - 1:0] inner_result1_PI2_inner;
+output [`SINGLE - 1:0] inner_result2_PI2_inner;
+output [`SINGLE - 1:0] inner_result3_PI2_inner;
+output [`SINGLE - 1:0] x_reg_PI2_inner;
+output [`SINGLE - 1:0] y_reg_PI2_inner;
+output done_sig_inner_loop;
+
+//////////////////////////////////////////////////
+
+output [`SINGLE - 1:0] inner_result_1_dq02abc;
+output [`SINGLE - 1:0] inner_result_2_dq02abc;
+output [`SINGLE - 1:0] inner_result_3_dq02abc;
+output [`SINGLE - 1:0] inner_result_4_dq02abc;
+output [`SINGLE - 1:0] inner_result_5_dq02abc;
+output [`SINGLE - 1:0] inner_result_6_dq02abc;
+output [`SINGLE - 1:0] inner_result_7_dq02abc;
+output [`SINGLE - 1:0] inner_result_8_dq02abc;
+output [`SINGLE - 1:0] inner_result_9_dq02abc;
+output [`SINGLE - 1:0] inner_result_10_dq02abc;
+output [`SINGLE - 1:0] inner_result_11_dq02abc;
+output [`SINGLE - 1:0] inner_result_12_dq02abc;
+output [`SINGLE - 1:0] inner_result_13_dq02abc;
+output [`SINGLE - 1:0] inner_result_14_dq02abc;
+output [`SINGLE - 1:0] Va_ref;
+output [`SINGLE - 1:0] Vb_ref;
+output [`SINGLE - 1:0] Vc_ref;
+output done_sig_dq02abc;
+
+//////////////////////////////////////////////////
+
+output [`SINGLE - 1:0] Va_compare;
+output done_sig_Va_compare;
+output [`SINGLE - 1:0] Vb_compare;
+output done_sig_Vb_compare;
+output [`SINGLE - 1:0] Vc_compare;
+output done_sig_Vc_compare;
+
+//////////////////////////////////////////////////
+
+output [`SINGLE - 1:0] count_integer;
+output [`SINGLE - 1:0] count_float;
+
+output [`SINGLE - 1:0] triangle_out;
+output [`SINGLE - 1:0] triangle_out_Amplitude;
+
+output [2:0] curr_state;
+output [2:0] next_state;
+
+output end_STATE_I;
+output end_STATE_II;
+output end_STATE_III;
+output end_STATE_IV;
+
+output done_sig_PWM;
+
+///////////////////////////////////////////////////
+
+output pwm_1;
+output pwm_4;
+output done_sig_comparator_Va;
+output pwm_3;
+output pwm_6;
+output done_sig_comparator_Vb;
+output pwm_5;
+output pwm_2;
+output done_sig_comparator_Vc;
+
+///////////////////////////////////////////////////
+
+output control_solve_end_sig;
+
+//output Sig_o[`N_OUTPUT_SIGNAL - 1:0];
+
+Control_interface_input Control_interface_input(
+																.clk(clk),
+																.rst(rst),
+																.sta(sta),
+																.exchange_data_sig(exchange_data_sig),
+																.V_METERVI(V_METERVI),
+																.addr_input_v_r(addr_input_v_r),
+																.pulse_input_v_r(pulse_input_v_r),
+																.ena_input_v_r(ena_input_v_r),
+																.step_input_v_r(step_input_v_r),
+																.ena_cal_input_v_r(ena_cal_input_v_r), 
+																.V(V),
+																.addr_input_v_r_d(addr_input_v_r_d),
+																.ena_cal_input_v_r_d(ena_cal_input_v_r_d),
+																.V_s(V_s),
+																.done_sig(sta_interface),
+																.addr_input_v_w(addr_input_v_w),
+																.pulse_input_v_w(pulse_input_v_w),
+																.ena_input_v_w(ena_input_v_w),
+																.step_input_v_w(step_input_v_w),
+																.ena_cal_input_v_w(ena_cal_input_v_w)
+															  );
+
+assign Va = V_s[`voltage_0];
+assign Vb = V_s[`voltage_1];
+assign Vc = V_s[`voltage_2];
+assign Ia = V_s[`voltage_0];
+assign Ib = V_s[`voltage_1];
+assign Ic = V_s[`voltage_2];
+assign Vdc = V_s[`voltage_0];
+
+multiplier_control_system multiplier_Va_pu(
+														 .clk(clk),
+														 .rst(rst),
+														 .sta(sta_interface),
+														 .x(Va),
+														 .y(const_inv_20),
+														 .xy(Va_pu),
+														 .done_sig(done_sig_Va_pu)
+														);
+
+multiplier_control_system multiplier_Vb_pu(
+														 .clk(clk),
+														 .rst(rst),
+														 .sta(sta_interface),
+														 .x(Vb),
+														 .y(const_inv_20),
+														 .xy(Vb_pu),
+														 .done_sig(done_sig_Vb_pu)
+														);
+														
+multiplier_control_system multiplier_Vc_pu(
+														 .clk(clk),
+														 .rst(rst),
+														 .sta(sta_interface),
+														 .x(Vc),
+														 .y(const_inv_20),
+														 .xy(Vc_pu),
+														 .done_sig(done_sig_Vc_pu)
+														);
+
+wire sta_PLL;
+assign sta_PLL = done_sig_Va_pu;
+
+PLL_verify PLL(
+					.clk(clk),
+					.sta(sta_PLL),
+					.rst(rst),
+					.rst_user(rst_user),
+					.control_valuation_sig(control_valuation_sig),
+					.Va(Va_pu),
+					.Vb(Vb_pu),
+					.Vc(Vc_pu),
+					
+					.inner_result_1(inner_result_1),
+					.inner_result_2(inner_result_2),
+					.inner_result_3(inner_result_3),
+					.inner_result_4(inner_result_4),
+
+					.inner_result_5(inner_result_5),
+					.inner_result_6(inner_result_6),
+					.multiplier_inner_result5_multiply_cos1(multiplier_inner_result5_multiply_cos1),
+					.multiplier_inner_result5_multiply_cos2(multiplier_inner_result5_multiply_cos2),
+					.multiplier_inner_result5_multiply_cos3(multiplier_inner_result5_multiply_cos3),
+					.sig1(sig1),
+					.sig2(sig2),
+					.sig3(sig3),
+					
+					.inner_result_7(inner_result_7),
+					.inner_result_8(inner_result_8),
+					.multiplier_inner_result7_multiply_sin1(multiplier_inner_result7_multiply_sin1),
+					.multiplier_inner_result7_multiply_sin2(multiplier_inner_result7_multiply_sin2),
+					.multiplier_inner_result7_multiply_sin3(multiplier_inner_result7_multiply_sin3),
+					.sig4(sig4),
+					.sig5(sig5),
+					.sig6(sig6),
+					.inner_result_9(inner_result_9),
+					.inner_result_10(inner_result_10),
+					.inner_result1_PLL1(inner_result1_PLL1),
+					.inner_result2_PLL1(inner_result2_PLL1),
+					.inner_result3_PLL1(inner_result3_PLL1),
+					.inner_result1_PLL2(inner_result1_PLL2),
+					.inner_result2_PLL2(inner_result2_PLL2),
+					.inner_result3_PLL2(inner_result3_PLL2),
+
+					.x_reg_PLL1(x_reg_PLL1),
+					.x_reg_PLL2(x_reg_PLL2),
+					.y_reg_PLL1(y_reg_PLL1),
+					.y_reg_PLL2(y_reg_PLL2),
+					
+					.frequence(frequence),
+					.theta(theta),			
+					.sin(sin),
+					.cos(cos),
+					.sin_reg(sin_reg),
+					.cos_reg(cos_reg),
+					.done_sig(done_sig_PLL)
+				  );
+				  
+abc2dq0 abc2dq0_V(
+					   .clk(clk),
+					   .rst(rst),
+						.sta(done_sig_PLL),
+					   .Va(Va),
+					   .Vb(Vb),
+					   .Vc(Vc),
+					   .sin_theta(sin),
+					   .cos_theta(cos),
+						
+					   .inner_result_1(inner_result_1_abc2dq0_V),
+					   .inner_result_2(inner_result_2_abc2dq0_V),
+					   .inner_result_3(inner_result_3_abc2dq0_V),
+					   .inner_result_4(inner_result_4_abc2dq0_V),
+					   .inner_result_5(inner_result_5_abc2dq0_V),
+					   .inner_result_6(inner_result_6_abc2dq0_V),
+					   .inner_result_7(inner_result_7_abc2dq0_V),
+					   .inner_result_8(inner_result_8_abc2dq0_V),
+					   .inner_result_9(inner_result_9_abc2dq0_V),
+					   .inner_result_10(inner_result_10_abc2dq0_V),
+					   .inner_result_11(inner_result_11_abc2dq0_V),
+					   .Vd(Vd_abc2dq0),
+					   .Vq(Vq_abc2dq0),
+						.done_sig(done_sig_abc2dq0_V)
+				     );
+
+//assign control_solve_end_sig = done_sig_abc2dq0_V;
+
+abc2dq0 abc2dq0_I(
+					   .clk(clk),
+					   .rst(rst),
+						.sta(done_sig_PLL),
+					   .Va(Ia),
+					   .Vb(Ib),
+					   .Vc(Ic),
+					   .sin_theta(sin),
+					   .cos_theta(cos),
+						
+					   .inner_result_1(inner_result_1_abc2dq0_I),
+					   .inner_result_2(inner_result_2_abc2dq0_I),
+					   .inner_result_3(inner_result_3_abc2dq0_I),
+					   .inner_result_4(inner_result_4_abc2dq0_I),
+					   .inner_result_5(inner_result_5_abc2dq0_I),
+					   .inner_result_6(inner_result_6_abc2dq0_I),
+					   .inner_result_7(inner_result_7_abc2dq0_I),
+					   .inner_result_8(inner_result_8_abc2dq0_I),
+					   .inner_result_9(inner_result_9_abc2dq0_I),
+					   .inner_result_10(inner_result_10_abc2dq0_I),
+					   .inner_result_11(inner_result_11_abc2dq0_I),
+					   .Vd(Id_abc2dq0),
+					   .Vq(Iq_abc2dq0),
+						.done_sig(done_sig_abc2dq0_I)
+				     );
+
+wire sta_PQ_cal;
+assign sta_PQ_cal = done_sig_abc2dq0_V;
+
+PQ_cal PQ_cal(
+				  .clk(clk),
+				  .rst(rst),
+				  .sta(sta_PQ_cal),
+				  .Vd(Vd_abc2dq0),
+				  .Vq(Vq_abc2dq0),
+				  .Id(Id_abc2dq0),
+				  .Iq(Iq_abc2dq0),
+				  .P(P),
+				  .Q(Q),
+				  .done_sig(done_sig_PQ_cal)
+				 );
+
+control_loop #(32'h3F000022 , 32'hBEFFFFBD  , 32'h3C23D776 , 32'hBC23D69F) control_outer_loop(
+																															 .clk(clk),
+																															 .rst(rst),
+																															 .rst_user(rst_user),
+																															 .control_valuation_sig(control_valuation_sig),
+																															 .sta(done_sig_PQ_cal),
+																															 .input_1(Vdc),
+																															 .input_2(const_Vdc_ref),
+																															 .input_3(Q),
+																															 .input_4(const_Q_ref),
+																															 .output_1(Id_ref),
+																															 .output_2(Iq_ref),
+																															  
+																															 .error_1(error_1_outer),
+																															 .error_2(error_2_outer),
+																															 .inner_result1_PI1(inner_result1_PI1_outer),
+																															 .inner_result2_PI1(inner_result2_PI1_outer),
+																															 .inner_result3_PI1(inner_result3_PI1_outer),
+																															 .x_reg_PI1(x_reg_PI1_outer),
+																															 .y_reg_PI1(y_reg_PI1_outer),
+
+																															 .inner_result1_PI2(inner_result1_PI2_outer),
+																															 .inner_result2_PI2(inner_result2_PI2_outer),
+																															 .inner_result3_PI2(inner_result3_PI2_outer),
+																															 .x_reg_PI2(x_reg_PI2_outer),
+																															 .y_reg_PI2(y_reg_PI2_outer),
+																															 .done_sig(done_sig_outer_loop)
+																															);
+										 
+control_loop #(32'h4120020C , 32'hC11FFDF4  , 32'h4120020C , 32'hC11FFDF4)  control_inner_loop(
+																															  .clk(clk),
+																															  .rst(rst),
+																															  .rst_user(rst_user),
+																															  .control_valuation_sig(control_valuation_sig),
+																															  .sta(done_sig_outer_loop),
+																															  .input_1(Id_ref),
+																															  .input_2(Id_abc2dq0),
+																															  .input_3(Iq_ref),
+																															  .input_4(Iq_abc2dq0),
+																															  .output_1(Vd_ref),
+																															  .output_2(Vq_ref),
+																															  
+																															  .error_1(error_1_inner),
+																															  .error_2(error_2_inner),
+
+																															  .inner_result1_PI1(inner_result1_PI1_inner),
+																															  .inner_result2_PI1(inner_result2_PI1_inner),
+																															  .inner_result3_PI1(inner_result3_PI1_inner),
+																															  .x_reg_PI1(x_reg_PI1_inner),
+																															  .y_reg_PI1(y_reg_PI1_inner),
+
+																															  .inner_result1_PI2(inner_result1_PI2_inner),
+																															  .inner_result2_PI2(inner_result2_PI2_inner),
+																															  .inner_result3_PI2(inner_result3_PI2_inner),
+																															  .x_reg_PI2(x_reg_PI2_inner),
+																															  .y_reg_PI2(y_reg_PI2_inner),
+																															  .done_sig(done_sig_inner_loop)
+																															 );
+
+dq02abc dq02abc(
+					 .clk(clk),
+					 .rst(rst),
+					 .sta(done_sig_inner_loop),
+					 .Vd(Vd_ref),
+					 .Vq(Vq_ref),
+					 .sin_theta(sin),
+					 .cos_theta(cos),
+					
+					 .inner_result_1(inner_result_1_dq02abc),
+					 .inner_result_2(inner_result_2_dq02abc),
+					 .inner_result_3(inner_result_3_dq02abc),
+					 .inner_result_4(inner_result_4_dq02abc),
+					 .inner_result_5(inner_result_5_dq02abc),
+					 .inner_result_6(inner_result_6_dq02abc),
+					 .inner_result_7(inner_result_7_dq02abc),
+					 .inner_result_8(inner_result_8_dq02abc),
+					 .inner_result_9(inner_result_9_dq02abc),
+					 .inner_result_10(inner_result_10_dq02abc),
+					 .inner_result_11(inner_result_11_dq02abc),
+					 .inner_result_12(inner_result_12_dq02abc),
+					 .inner_result_13(inner_result_13_dq02abc),
+					 .inner_result_14(inner_result_14_dq02abc),
+					 .Va(Va_ref),
+					 .Vb(Vb_ref),
+					 .Vc(Vc_ref),
+					 .done_sig(done_sig_dq02abc)
+				   );
+				 
+multiplier_control_system multiplier_Va_ref(
+														  .clk(clk),
+														  .rst(rst),
+														  .sta(done_sig_dq02abc),
+														  .x(Va_ref),
+														  .y(const_inv_Vdc_ref),
+														  .xy(Va_compare),
+														  .done_sig(done_sig_Va_compare)
+														 );
+
+multiplier_control_system multiplier_Vb_ref(
+														  .clk(clk),
+														  .rst(rst),
+														  .sta(done_sig_dq02abc),
+														  .x(Vb_ref),
+														  .y(const_inv_Vdc_ref),
+														  .xy(Vb_compare),
+														  .done_sig(done_sig_Vb_compare)
+														 );
+														
+multiplier_control_system multiplier_Vc_ref(
+														  .clk(clk),
+														  .rst(rst),
+														  .sta(done_sig_dq02abc),
+														  .x(Vc_ref),
+														  .y(const_inv_Vdc_ref),
+														  .xy(Vc_compare),
+														  .done_sig(done_sig_Vc_compare)
+														 );
+
+PWM PWM(
+		  .clk(clk),
+		  .rst(rst),
+	 	  .rst_user(rst_user),
+		  .sta(sta),
+		  .sta_user(sta_user),
+		  .count_integer(count_integer),
+		  .count_float(count_float),
+	     .triangle_out(triangle_out),
+		  .triangle_out_Amplitude(triangle_out_Amplitude),
+		  .curr_state(curr_state),
+		  .next_state(next_state),
+		  .end_STATE_I(end_STATE_I),
+		  .end_STATE_II(end_STATE_II),
+		  .end_STATE_III(end_STATE_III),
+		  .end_STATE_IV(end_STATE_IV),
+		  .done_sig(done_sig_PWM)
+		 );
+		 
+wire sta_Comparator;
+assign sta_Comparator = done_sig_Va_compare;
+		 
+Comparator Comparator_Va(
+								 .clk(clk),
+								 .rst(rst),
+								 .sta(sta_Comparator),
+								 .input_1(Va_compare),
+								 .input_2(triangle_out),
+								 .output_1(pwm_1),
+								 .output_2(pwm_4),
+								 .done_sig(done_sig_comparator_Va)
+							   );
+								
+Comparator Comparator_Vb(
+								 .clk(clk),
+								 .rst(rst),
+								 .sta(sta_Comparator),
+								 .input_1(Vb_compare),
+								 .input_2(triangle_out),
+								 .output_1(pwm_3),
+								 .output_2(pwm_6),
+								 .done_sig(done_sig_comparator_Vb)
+							   );
+								
+Comparator Comparator_Vc(
+								 .clk(clk),
+								 .rst(rst),
+								 .sta(sta_Comparator),
+								 .input_1(Vc_compare),
+								 .input_2(triangle_out),
+								 .output_1(pwm_5),
+								 .output_2(pwm_2),
+								 .done_sig(done_sig_comparator_Vc)
+							   );
+		 
+assign control_solve_end_sig = done_sig_comparator_Va;
+
+output [31:0] Sig_o[`N_OUTPUT_SIGNAL - 1:0];
+output [`ADDR_WIDTH_OUTPUT_SIGNAL - 1:0] addr_output_signal_w;
+output pulse_output_signal_w;
+output ena_output_signal_w;
+output step_output_signal_w;
+output ena_cal_output_signal_w;
+output gate_signal;
+
+assign Sig_o[`control_sig_0] = pwm_1;
+assign Sig_o[`control_sig_1] = pwm_2;
+assign Sig_o[`control_sig_2] = pwm_3;
+assign Sig_o[`control_sig_3] = pwm_4;
+assign Sig_o[`control_sig_4] = pwm_5;
+assign Sig_o[`control_sig_5] = pwm_6;
+				  
+Control_interface_output Control_interface_output(
+																  .clk(clk),
+																  .rst(rst),
+																  .sta(control_solve_end_sig),
+																  .Sig_o(Sig_o),
+																  .addr_output_signal_w(addr_output_signal_w),
+																  .pulse_output_signal_w(pulse_output_signal_w),
+																  .ena_output_signal_w(ena_output_signal_w),
+																  .step_output_signal_w(step_output_signal_w),
+																  .ena_cal_output_signal_w(ena_cal_output_signal_w),
+																  .gate_signal(gate_signal)
+															    );
+*/				  
+endmodule

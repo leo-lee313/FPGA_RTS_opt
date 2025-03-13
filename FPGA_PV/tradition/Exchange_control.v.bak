@@ -1,0 +1,29 @@
+`include "../parameter/Global_parameter.v"
+
+module Exchange_control(
+				 clk,
+				 rst,
+				 sta_user,
+				 sta_user_r
+				);
+				
+parameter output_para = 1;
+					  
+input clk;
+input rst;
+input sta_user;
+
+output sta_user_r;
+//reg sta_t;
+
+push_cache #(output_para) push_button(
+												  .clk(clk),
+												  .rst(rst),
+												  .button(sta_user),
+												  .button_t(sta_user_r)
+												 );
+												 
+												 
+
+endmodule
+

@@ -1,0 +1,12 @@
+module multiplier_control_system(
+											.clk,
+											.rst,
+											.sta,
+											.done_sig
+										   );
+											
+input clk;
+input rst;
+input sta;
+
+output done_sig

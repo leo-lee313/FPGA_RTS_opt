@@ -1,0 +1,957 @@
+`include "../parameter/global_parameter.v"
+
+module PrimeMotor_water(
+			 clk_sim,
+			 sta_user,
+			 rst_user,
+			 rst_control,
+			 sta_control,
+			 control_valuation_sig,
+          sim_time,			 
+			 Va,
+			 Vb,
+			 Vc,		 
+			 Ia_pm_rec,
+			 Ib_pm_rec,
+          Ic_pm_rec,
+			 before_sta_control,
+			
+			 m1,
+			 m2,
+			 m3,
+			 m4,
+			 m5,
+			 m6,
+			 Ia,
+			 Ib,
+			 //Ic,
+			 
+			 done_sig
+			);
+//constwbase is 20.42035225
+parameter constwbase = 64'h40346B9C347E8CCE;
+//constRow is 1.08
+parameter constRow = 32'h3F8A3D71;
+//constAr is 95.94
+parameter constAr = 32'h42BFE148;
+//constR is 5.53
+parameter constR = 32'h40B0F5C3;
+//const1 is 0.08
+parameter const1 = 32'h3DA3D70A;
+//const2 is 0.035
+parameter const2 = 32'h3D0F5C29;
+
+parameter consttwo = 64'h4000000000000000;
+parameter constone = 32'h3F800000; 
+//parameter Tm1_temp_stor = 32'h41200000;
+//const3 is 0.5
+parameter const3 = 32'h3F000000;
+//const4 is 0.5176
+parameter const4 = 32'h3F04816F;
+//const5 is 5
+parameter const5 = 32'h40A00000;
+//const6 is 0.4
+parameter const6 = 32'h3ECCCCCD;
+//const7 is -21
+parameter const7 = 32'hC1A80000;
+//const8 is 0.0068
+parameter const8 = 32'h3BDED289;
+//const9 is -1
+parameter const9 = 32'hBF800000;
+//const116 is 116
+parameter const116 = 32'h42E80000;
+		
+input clk_sim;
+input rst_control;
+input sta_control;
+input rst_user;
+input sta_user;
+input control_valuation_sig;
+input before_sta_control;
+input [`WIDTH_TIME - 1:0] sim_time;
+input [`SINGLE - 1:0] Va;
+input [`SINGLE - 1:0] Vb;
+input [`SINGLE - 1:0] Vc;
+input [`SINGLE - 1:0] Ia_pm_rec;
+input [`SINGLE - 1:0] Ib_pm_rec;
+input [`SINGLE - 1:0] Ic_pm_rec;
+
+output [`SINGLE - 1:0] Ia;
+output [`SINGLE - 1:0] Ib;
+//output [`SINGLE - 1:0] Ic;
+output m1;
+output m2;
+output m3;
+output m4;
+output m5;
+output m6;
+output done_sig;
+
+
+
+wire [`SINGLE - 1:0] wm;
+wire [`SINGLE - 1:0] Tm;
+wire [`SINGLE - 1:0] VWind;
+wire [`SINGLE - 1:0] inv_VWind;
+wire [`SINGLE - 1:0] lamda;
+wire [`SINGLE - 1:0] lamda1;
+wire [`SINGLE - 1:0] inner_product1;
+wire [`SINGLE - 1:0] beta,beta_delay;
+wire [`SINGLE - 1:0] Tm1_temp;
+wire [`SINGLE - 1:0] Tm_temp;
+wire [`SINGLE - 1:0] inner_sum1;
+wire [`SINGLE - 1:0] inner_sum2;
+wire [`SINGLE - 1:0] inner_result4;
+wire [`SINGLE - 1:0] inner_product2;
+wire [`SINGLE - 1:0] inner_product3;
+wire [`SINGLE - 1:0] inner_product4;
+wire [`SINGLE - 1:0] inner_sum3;
+wire [`SINGLE - 1:0] inner_result5;
+wire [`SINGLE - 1:0] inner_result6;
+wire [`SINGLE - 1:0] inner_result7;
+wire [`SINGLE - 1:0] inner_result8;
+wire [`SINGLE - 1:0] inner_result9;
+wire [`SINGLE - 1:0] inner_result10;
+wire [`SINGLE - 1:0] inner_result11;
+wire [`SINGLE - 1:0] inner_product222;
+wire [`SINGLE - 1:0] inner_product333;
+wire [`SINGLE - 1:0] inner_product444;
+wire [`SINGLE - 1:0] inner_product5;
+wire [`SINGLE - 1:0] inner_product6;
+wire [`SINGLE - 1:0] inner_product7;
+wire [`SINGLE - 1:0] inner_product8;
+wire [`SINGLE - 1:0] inner_product9;
+wire [`SINGLE - 1:0] inner_product10;
+wire [`SINGLE - 1:0] Pm;
+wire [`SINGLE - 1:0] Pm_temp;
+wire [`SINGLE - 1:0] inv_wm;
+wire [`SINGLE - 1:0] theta;
+wire [`SINGLE - 1:0] theta_Cal;
+wire [`SINGLE - 1:0] Te;
+wire [`SINGLE - 1:0] Pref;
+wire [`SINGLE - 1:0] P_PM_Cal;
+wire [`SINGLE - 1:0] P_PM;
+wire [`SINGLE - 1:0] inv_wm_delay;
+wire [`SINGLE - 1:0] inner_product6_delay;
+wire [`SINGLE - 1:0] inner_product7_delay;
+wire [`SINGLE - 1:0]	inner_result4_delay;
+wire [`SINGLE - 1:0] lamda_delay1;
+wire [`SINGLE - 1:0]	inner_sum3_delay;
+wire [`SINGLE - 1:0]	inner_product9_delay;
+wire [`EXTENDED_SINGLE - 1:0]  Id_double;
+wire [`EXTENDED_SINGLE - 1:0]  Iq_double;
+wire [`EXTENDED_SINGLE - 1:0]  Id_double_Cal;
+wire [`EXTENDED_SINGLE - 1:0]  Iq_double_Cal;
+wire [`EXTENDED_SINGLE - 1:0] wm_starter;
+wire [`EXTENDED_SINGLE - 1:0] wm_temp;
+wire [`EXTENDED_SINGLE - 1:0] inner_result1;
+wire [`EXTENDED_SINGLE - 1:0] inner_result2;
+wire [`EXTENDED_SINGLE - 1:0] inner_result3;
+wire [`EXTENDED_SINGLE - 1:0] Tm1_temp_double;
+wire [`EXTENDED_SINGLE - 1:0] beta_temp1;
+wire [`EXTENDED_SINGLE - 1:0] Tm1_temp_stor;
+wire [`EXTENDED_SINGLE - 1:0] Tm111;
+
+wire done_sig_Tm_temp_312;
+wire done_enaread_product6_298;
+wire done_enaread_product7_291;
+wire done_sig_div32_271;
+wire done_enaread_lamda_delay232;
+wire done_finish_lamda174;	
+wire before_enaread_m;	
+wire done_sig_add_inst14_241;
+wire done_enaread_sum3_269;													  
+wire done_sig_diva_175;
+wire beta_flag;
+wire done_sig_MPPT187;
+wire done_sig_multiplier9_15;
+wire done_sig_multiplier10_179;	
+wire done_sig_add16_300;
+wire done_sig_delay288;
+wire done_sig_multiplier293;
+wire done_sig_multiplier305;
+wire done_sig_ChooserS204;
+wire done_sig_threshold203;
+wire done_sig_threshold226;
+wire done_sig_double2singlea229;
+wire done_sig_lamda1;
+wire done_sig_ComparePm307;
+wire 	done_sig_PMSM193;
+wire done_sig_RectifierControl289;
+wire donesig_P_PM63;
+wire done_sig_finish_wm_double166;
+wire done_sig_finish_wm169;
+wire done_sig_finish_Idtemp97;
+wire done_read_x_outpi163;
+wire done_finish_Pref185;
+wire done_sig_sub173;		
+wire done_ena_read194;
+wire done_ena_read_Idq217;
+wire done_ena_read_theta225;
+wire done_read_x_PIddd184;
+wire done_ena_read_P178;
+wire done_readTm_before128;
+
+assign Tm = Va;
+Dingshi64 #(64'h40346B851EB851EC,32'd1667) Dingshi21(
+          .clk(clk_sim),			 		 
+			 .sim_time(sim_time),  
+          .Tm_temp(64'h0000000000000000),			 
+			 .Tm(wm_starter)			
+			);
+			
+WindGEN #(32'd666667,32'd1333333,32'h411B3333,32'h41280000,32'h41280000) WindGEN1(			 		 		 
+			 .clk(clk_sim),
+          .sim_time(sim_time),           			 
+			 .VWind(VWind)			
+			);
+			
+P_cal_water P_cal1(
+              .clk(clk_sim),
+				  .rst_user(rst_user),
+				  .rst(rst_control),
+				  .sta(sta_control),
+				  .control_valuation_sig(control_valuation_sig),
+				  .Va(Va),
+				  .Vb(Vb),
+				  .Vc(Vc),
+				  .Ia(Ia_pm_rec),
+				  .Ib(Ib_pm_rec),
+				  .Ic(Ic_pm_rec),
+				  .P(P_PM_Cal),
+				  
+				  
+				  .done_sig(donesig_P_PM63)
+				 );
+/////////////////////////////////////////////Tm_start//////////////////////////////////////////				 
+
+											
+System_FIFO_64   FIFO_Tm1_temp(
+								.clk( clk_sim ),
+								.rst(rst_control),
+								.rst_user(rst_user),
+								.before_enaread(done_readTm_before128),
+								.before_enawrite(done_sig),
+								.cin( Tm1_temp_double ),
+								.cout( Tm1_temp_stor )
+							  );
+							  
+		
+Dingshi64 #(64'hC09F400000000000,32'd40) Dingshi1(			 		 
+			 .clk(clk_sim),
+          .sim_time(sim_time), 			 
+          .Tm_temp(Tm1_temp_stor),			 
+			 .Tm(Tm111)			
+			);			
+			
+////////////////////////////////////////////Tm_end///////////////////////////////////////////////
+wire done_sig_finish_Iab;			
+PMSM_water  PMSM1(
+			 .clk_sim(clk_sim),
+			 .rst_control(rst_control),
+			 .sta_control(sta_control),
+			 .rst_user(rst_user),
+			 .sta_user(sta_user),
+			 .before_sta_control(before_sta_control),
+			 .control_valuation_sig(control_valuation_sig), 	
+	       .Tm(Tm),
+			 .Va(Va),
+			 .Vb(Vb),
+			 .Vc(Vc),
+			 .wm_starter(wm_starter),
+			 
+			 .wm(wm),
+			 .wm_temp(wm_temp),
+			 .theta(theta_Cal),
+			 .Te(Te),
+			 .Ia(Ia),
+			 .Ib(Ib),
+			 
+			 .Id_temp(Id_double_Cal),
+			 .Iq_temp(Iq_double_Cal),
+			 .done_sig_finish_wm_double(done_sig_finish_wm_double166),
+          .done_sig_finish_wm(done_sig_finish_wm169),
+			 .done_sig_finish_Idtemp(done_sig_finish_Idtemp97),
+			 .done_sig_finish_Iab(done_sig_finish_Iab),
+			 .done_read_x_outpi(done_read_x_outpi163),
+			 .done_readTm_before(done_readTm_before128),
+          .done_sig_PMSM(done_sig_PMSM193)			 
+			);
+
+ 	
+MPPT_water MPPT1(			 		 		 
+			 .sta_user(sta_user),
+			 .sta_control(done_sig_finish_wm169),
+			 .rst_control(rst_control),
+			 .clk_sim( clk_sim ),
+			 .wm(wm), 
+          			 
+			 .Pref(Pref),
+	       .beta_flag(beta_flag),
+			 .done_finish_Pref(done_finish_Pref185),
+	       .done_sig_MPPT(done_sig_MPPT187)		 
+			);			
+						
+////////////////////below for pitch blade angle and its control----start/////////////////////
+		
+ADD_SUB_64_MODULE	SUB1(
+          .sta(done_sig_finish_wm_double166),
+	       .rst_control(rst_control),
+			 .add_sub(`sub),
+			 .clk(clk_sim),
+			 .dataa(wm_temp),
+			 .datab(constwbase),
+			 .result(inner_result1),
+			 .done_sig(done_sig_sub173)
+										 );
+
+						
+PI_limit64_water_v1 #(64'h3FE0000000000000,64'h3EEF75104D551D69,64'h403B000000000000,64'h4000000000000000)PI1(
+					 .clk(clk_sim),
+			       .rst(rst_control),
+			       .rst_user(rst_user),
+					 .sta(done_sig_sub173),
+					 .done_read_x(done_read_x_outpi163),
+					 .x(inner_result1),
+						  
+					 .y(inner_result2),
+					 .done_sig(done_sig_threshold203)
+					);	//30						
+							 
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////								  
+ChooserSwitch64  ChooserSwitch64_1(			 		 		 
+			 .rst_user(rst_user),
+			 .clk(clk_sim),
+			 .beta_flag(beta_flag),
+			 .sta(done_sig_threshold203),
+			 .rst(rst_control),
+			 .datain1(consttwo),
+			 .datain2(inner_result2),
+			 			            			 
+			 .dataout(inner_result3),
+	       .done_sig_ChooserS(done_sig_ChooserS204)		 
+			);
+
+DELAY_1CLK  #(21) Delay_12(
+						               .clk(clk_sim),
+						               .rst(rst_control),
+						               .d(done_sig_sub173),
+						               .q(done_ena_read194)
+					                  );			
+
+			
+PID_initial_threshold64_water #(64'h3EEF74F160D94856,64'h3EEF74F160D94856,64'h3FEFFFC116241D85,64'h3FF0000000000000,64'h403B000000000000,64'h4000000000000000)PID2(
+			 .clk(clk_sim),
+			 .rst(rst_control),
+			 .rst_user(rst_user),
+			 .sta(done_sig_ChooserS204),
+			 .done_read(done_ena_read194),
+			 .control_valuation_sig(control_valuation_sig),
+			 .x(inner_result3),
+			
+			 .y(beta_temp1),				  
+			 .done_sig(done_sig_threshold226)
+		   );//22
+/*			
+convert_double_to_single_control_system   double2single_a2(
+                                               .clk(clk_sim),
+															  .rst(rst_control),
+															  .sta(done_sig_threshold226),
+															  .x(beta_temp1),
+															  .y(beta),
+															  .done_sig(done_sig_double2singlea229)
+															  );
+*/
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////															  
+wire [`SINGLE - 1:0] betaaaa;
+convert_double_to_single_control_system   double2single_a2(
+                                               .clk(clk_sim),
+															  .rst(rst_control),
+															  .sta(done_sig_threshold226),
+															  .x(beta_temp1),
+															  .y(betaaaa),
+															  .done_sig(done_sig_double2singlea229)
+															  );
+															  
+DELAY_NCLK  #(32,60)  DELAY_NCLK15a(
+						               .clk(clk_sim),
+											.rst(rst_control),
+						               .d(wm),
+						               .q(beta)
+					                 );
+										  
+															  
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////															  
+////////////////////below for pitch blade angle and its control----end/////////////////////
+
+DELAY_1CLK  #(9) Delay_12a(
+						               .clk(clk_sim),
+						               .rst(rst_control),
+						               .d(done_sig_finish_wm169),
+						               .q(done_ena_read_P178)
+					                  );
+System_FIFO_32   FIFO_P_PM(
+								.clk( clk_sim ),
+								.rst(rst_control),
+								.rst_user(rst_user),
+								.before_enaread(done_ena_read_P178),
+								.before_enawrite(donesig_P_PM63),
+								.cin( P_PM_Cal ),
+								.cout( P_PM )
+							  );
+							  
+DELAY_1CLK  #(32) Delay_12b(
+						               .clk(clk_sim),
+						               .rst(rst_control),
+						               .d(done_finish_Pref185),
+						               .q(done_ena_read_Idq217)
+					                  );
+System_FIFO_64   FIFO_Id_double(
+								.clk( clk_sim ),
+								.rst(rst_control),
+								.rst_user(rst_user),
+								.before_enaread(done_ena_read_Idq217),
+								.before_enawrite(done_sig_finish_Idtemp97),
+								.cin( Id_double_Cal ),
+								.cout( Id_double )
+							  );
+System_FIFO_64   FIFO_Iq_double(
+								.clk( clk_sim ),
+								.rst(rst_control),
+								.rst_user(rst_user),
+								.before_enaread(done_ena_read_Idq217),
+								.before_enawrite(done_sig_finish_Idtemp97),
+								.cin( Iq_double_Cal ),
+								.cout( Iq_double )
+							  );
+							  
+DELAY_1CLK  #(8) Delay_12c(
+						               .clk(clk_sim),
+						               .rst(rst_control),
+						               .d(done_ena_read_Idq217),
+						               .q(done_ena_read_theta225)
+					                  );
+System_FIFO_32   FIFO_theta(
+								.clk( clk_sim ),
+								.rst(rst_control),
+								.rst_user(rst_user),
+								.before_enaread(done_ena_read_theta225),
+								.before_enawrite(done_sig_PMSM193),
+								.cin( theta_Cal ),
+								.cout( theta )
+							  );							  
+DELAY_1CLK  #(11) Delay_12f(
+						               .clk(clk_sim),
+						               .rst(rst_control),
+						               .d(done_sig_sub173),
+						               .q(done_read_x_PIddd184)
+					                  );							  
+
+
+DELAY_1CLK  #(20) Delay_12h(
+						               .clk(clk_sim),
+						               .rst(rst_control),
+						               .d(done_sig_RectifierControl289),
+						               .q(before_enaread_m)
+					                  );
+											
+RectifierControl_water RectifierControl1(
+			 .clk(clk_sim),
+			 .rst(rst_control),
+			 .sta(done_finish_Pref185),	 
+          .sta_user(sta_user),
+          .rst_user(rst_user),
+          .before_enaread_m(before_enaread_m),
+          .done_read_x_PIddd1(done_read_x_PIddd184),			 
+          .Pref(Pref),
+          .P_PM(P_PM),         
+          .Id(Id_double),
+          .Iq(Iq_double),
+          .theta(theta),
+          			 
+			 
+			 .m1(m1),
+			 .m2(m2),
+			 .m3(m3),
+			 .m4(m4),
+			 .m5(m5),
+			 .m6(m6),
+			 .done_sig(done_sig_RectifierControl289)
+			);
+	
+////////////////////below for wind turbine//////////////////////
+///////below for lamda//////
+
+Divide_nodsp	div32_1(
+							  .aclr(rst_control),
+							  .clk_en(`ena_math),
+							  .clock(clk_sim),
+							  .dataa(constone),
+							  .datab(VWind),
+							  .result(inv_VWind)								 
+							 );
+/*							 
+divider_control_system  div32_1(
+										.clk( clk_sim ),
+										.rst(rst_control),
+										.sta(sta_control),
+										.x( constone ),
+										.y( VWind ),
+										.xy( inv_VWind ),
+										.done_sig(done_sig_delay114)
+									  );
+*/	
+
+Multiplier_nodsp	multiplier_control_system0(
+									  .aclr(rst_control),
+									  .clk_en(`ena_math),
+									  .clock(clk_sim),
+									  .dataa(inv_VWind),
+									  .datab(constR),
+									  .result(inner_product1)
+									 );
+/*									 
+multiplier_control_system  multiplier_control_system0(
+					.clk(clk_sim),
+					.rst(rst_control),
+					.sta(done_sig_delay114),
+					.x(inv_VWind),
+					.y(constR),
+					
+					.xy(inner_product1),
+					.done_sig(done_sig_multiplier0)
+										  );
+*/									  
+multiplier_control_system  multiplier_control_system1(
+					.clk(clk_sim),
+					.rst(rst_control),
+					.sta(done_sig_finish_wm169),
+					.x(wm),
+					.y(inner_product1),
+					
+					.xy(lamda),
+					.done_sig(done_finish_lamda174)
+										  );
+///////below for lamda1//////
+
+DELAY_1CLK  #(3) Delay_12p(
+						               .clk(clk_sim),
+						               .rst(rst_control),
+						               .d(done_sig_double2singlea229),
+						               .q(done_enaread_lamda_delay232)
+					                  );
+System_FIFO_32   FIFO_lamda_delay1(
+								.clk( clk_sim ),
+								.rst(rst_control),
+								.rst_user(rst_user),
+								.before_enaread(done_enaread_lamda_delay232),
+								.before_enawrite(done_finish_lamda174),
+								.cin( lamda ),
+								.cout( lamda_delay1 )
+							  );	
+
+
+Multiplier_nodsp	multiplier_control_system2(
+									  .aclr(rst_control),
+									  .clk_en(`ena_math),
+									  .clock(clk_sim),
+									  .dataa(beta),
+									  .datab(const1),
+									  .result(inner_product2)
+									 );
+									 
+Adder_nodsp	add_inst11(
+						.aclr(rst_control),
+						.add_sub(`add),
+						.clk_en(`ena_math),
+						.clock(clk_sim),
+						.dataa(inner_product2),
+						.datab(lamda_delay1),
+						.result(inner_sum1)								 
+					  );
+										  
+Divide_nodsp	div32_2(
+							  .aclr(rst_control),
+							  .clk_en(`ena_math),
+							  .clock(clk_sim),
+							  .dataa(constone),
+							  .datab(inner_sum1),
+							  .result(inner_result4)								 
+							 );										  	
+										  
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////									  
+
+Multiplier_nodsp	multiplier_control_system3(
+									  .aclr(rst_control),
+									  .clk_en(`ena_math),
+									  .clock(clk_sim),
+									  .dataa(beta),
+									  .datab(beta),
+									  .result(inner_product3)
+									 );
+									 										  									 
+DELAY_NCLK  #(32,5)  DELAY_NCLK15abb(
+						               .clk(clk_sim),
+											.rst(rst_control),
+						               .d(beta),
+						               .q(beta_delay)
+					                 );
+
+Multiplier_nodsp	multiplier_control_system4(
+									  .aclr(rst_control),
+									  .clk_en(`ena_math),
+									  .clock(clk_sim),
+									  .dataa(inner_product3),
+									  .datab(beta_delay),
+									  .result(inner_product4)
+									 );
+										  
+Adder_nodsp	add_inst12(
+						.aclr(rst_control),
+						.add_sub(`add),
+						.clk_en(`ena_math),
+						.clock(clk_sim),
+						.dataa(constone),
+						.datab(inner_product4),
+						.result(inner_sum2)								 
+					  );
+					  
+Divide_nodsp	div32_3(
+							  .aclr(rst_control),
+							  .clk_en(`ena_math),
+							  .clock(clk_sim),
+							  .dataa(const2),
+							  .datab(inner_sum2),
+							  .result(inner_result5)								 
+							 );		
+										  								  
+DELAY_NCLK  #(32,5)  DELAY_NCLKqwe(
+						               .clk(clk_sim),
+											.rst(rst_control),
+						               .d(inner_result4),
+						               .q(inner_result4_delay)
+					                 );
+										  
+Adder_nodsp	sub13(
+						.aclr(rst_control),
+						.add_sub(`sub),
+						.clk_en(`ena_math),
+						.clock(clk_sim),
+						.dataa(inner_result4_delay),
+						.datab(inner_result5),
+						.result(inner_result6)								 
+					  );
+					  
+Divide_nodsp	div32_20(
+							  .aclr(rst_control),
+							  .clk_en(`ena_math),
+							  .clock(clk_sim),
+							  .dataa(constone),
+							  .datab(inner_result6),
+							  .result(lamda1)								 
+							 );
+							 
+DELAY_1CLK #(24) Delay_DONE_S1(
+										 .clk(clk_sim),
+										 .rst(rst_control),
+										 .d(done_sig_add_inst14_241),
+										 .q(done_sig_lamda1)
+										);
+										
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////								 
+//////////////below for Pm///////////////
+	
+Multiplier_nodsp	multiplier_control_system5(
+									  .aclr(rst_control),
+									  .clk_en(`ena_math),
+									  .clock(clk_sim),
+									  .dataa(VWind),
+									  .datab(VWind),
+									  .result(inner_product222)
+									 );
+									 
+Multiplier_nodsp	multiplier_control_system6(
+									  .aclr(rst_control),
+									  .clk_en(`ena_math),
+									  .clock(clk_sim),
+									  .dataa(inner_product222),
+									  .datab(VWind),
+									  .result(inner_product333)
+									 );
+									 
+Multiplier_nodsp	multiplier_control_system7(
+									  .aclr(rst_control),
+									  .clk_en(`ena_math),
+									  .clock(clk_sim),
+									  .dataa(const3),
+									  .datab(constRow),
+									  .result(inner_product444)
+									 );
+Multiplier_nodsp	multiplier_control_system8(
+									  .aclr(rst_control),
+									  .clk_en(`ena_math),
+									  .clock(clk_sim),
+									  .dataa(inner_product444),
+									  .datab(constAr),
+									  .result(inner_product5)
+									 );
+									 
+Multiplier_nodsp	multiplier_control_system9(
+									  .aclr(rst_control),
+									  .clk_en(`ena_math),
+									  .clock(clk_sim),
+									  .dataa(inner_product5),
+									  .datab(inner_product333),
+									  .result(inner_product6)
+									 );
+									 
+DELAY_1CLK #(15) Delay_DO111(
+										 .clk(clk_sim),
+										 .rst(rst_control),
+										 .d(sta_control),
+										 .q(done_sig_multiplier9_15)
+										);									 
+	
+
+multiplier_control_system  multiplier_control_system10(
+					.clk(clk_sim),
+					.rst(rst_control),
+					.sta(done_finish_lamda174),
+					.x(lamda),
+					.y(const8),
+					
+					.xy(inner_product7),
+					.done_sig(done_sig_multiplier10_179)
+										  );
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////										  
+									  
+Multiplier_nodsp	multiplier_control_system11(
+									  .aclr(rst_control),
+									  .clk_en(`ena_math),
+									  .clock(clk_sim),
+									  .dataa(beta),
+									  .datab(const6),
+									  .result(inner_product8)
+									 );
+									 
+Adder_nodsp	add_inst14(
+						.aclr(rst_control),
+						.add_sub(`add),
+						.clk_en(`ena_math),
+						.clock(clk_sim),
+						.dataa(inner_product8),
+						.datab(const5),
+						.result(inner_sum3)								 
+					  );
+					  
+DELAY_1CLK #(12) Delay_DONE_SIGwq(
+										 .clk(clk_sim),
+										 .rst(rst_control),
+										 .d(done_sig_double2singlea229),
+										 .q(done_sig_add_inst14_241)
+										);					  
+
+										
+////////////////////////////////////////////////////////////////////////////////////////////////////////////							
+DELAY_1CLK  #(4) Delay_12q(
+						               .clk(clk_sim),
+						               .rst(rst_control),
+						               .d(done_sig_lamda1),
+						               .q(done_enaread_sum3_269)
+					                  );
+									
+System_FIFO_32   FIFO_lamda_delay2(
+								.clk( clk_sim ),
+								.rst(rst_control),
+								.rst_user(rst_user),
+								.before_enaread(done_enaread_sum3_269),
+								.before_enawrite(done_sig_add_inst14_241),
+								.cin( inner_sum3 ),
+								.cout( inner_sum3_delay )
+							  );					
+										  									  										  
+Divide_nodsp	div32_4(
+							  .aclr(rst_control),
+							  .clk_en(`ena_math),
+							  .clock(clk_sim),
+							  .dataa(const116),
+							  .datab(lamda1),
+							  .result(inner_result7)								 
+							 );	
+									
+Adder_nodsp	sub15(
+						.aclr(rst_control),
+						.add_sub(`sub),
+						.clk_en(`ena_math),
+						.clock(clk_sim),
+						.dataa(inner_result7),
+						.datab(inner_sum3_delay),
+						.result(inner_result8)								 
+					  );									
+									
+Multiplier_nodsp	multiplier_control_system12(
+									  .aclr(rst_control),
+									  .clk_en(`ena_math),
+									  .clock(clk_sim),
+									  .dataa(inner_result8),
+									  .datab(const4),
+									  .result(inner_product9)
+									 );
+									 								  
+DELAY_NCLK  #(32,5)  DELAY_NCLKrty(
+						               .clk(clk_sim),
+											.rst(rst_control),
+						               .d(inner_product9),
+						               .q(inner_product9_delay)
+					                 );
+										  
+
+divider_control_system  div32_5(
+										.clk( clk_sim ),
+										.rst(rst_control),
+										.sta(done_sig_lamda1),
+										.x( const7 ),
+										.y( lamda1 ),
+										.xy( inner_result9 ),
+										.done_sig(done_sig_div32_271)
+									  );										  
+exp_control_system  exp32_2(
+								  .clk(clk_sim),
+					           .rst(rst_control),
+								  .sta(done_sig_div32_271),
+								  .x( inner_result9 ),
+								  .y( inner_result10 ),
+								  .done_sig(done_sig_delay288)
+								  );										  
+
+
+multiplier_control_system  multiplier_control_system13(
+					.clk(clk_sim),
+					.rst(rst_control),
+					.sta(done_sig_delay288),
+					.x(inner_result10),
+					.y(inner_product9_delay),
+					
+					.xy(inner_product10),
+					.done_sig(done_sig_multiplier293)
+					);
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+DELAY_1CLK  #(3) Delay_12i(
+						               .clk(clk_sim),
+						               .rst(rst_control),
+						               .d(done_sig_delay288),
+						               .q(done_enaread_product7_291)
+					                  );
+									
+System_FIFO_32   FIFO_inner_product7_delay(
+								.clk( clk_sim ),
+								.rst(rst_control),
+								.rst_user(rst_user),
+								.before_enaread(done_enaread_product7_291),
+								.before_enawrite(done_sig_multiplier10_179),
+								.cin( inner_product7 ),
+								.cout( inner_product7_delay )
+							  );
+
+
+					
+adder_control_system add_inst16(
+									 .clk(clk_sim),
+									 .rst(rst_control),
+									 .sta(done_sig_multiplier293),
+									 .add_sub(`add),
+									 .x(inner_product7_delay),
+									 .y(inner_product10),
+									 .xy(inner_result11),
+									 .done_sig(done_sig_add16_300)
+								   );					
+							 
+DELAY_1CLK  #(5) Delay_12o(
+						               .clk(clk_sim),
+						               .rst(rst_control),
+						               .d(done_sig_multiplier293),
+						               .q(done_enaread_product6_298)
+					                  );
+									
+System_FIFO_32   FIFO_inner_product6_delay(
+								.clk( clk_sim ),
+								.rst(rst_control),
+								.rst_user(rst_user),
+								.before_enaread(done_enaread_product6_298),
+								.before_enawrite(done_sig_multiplier9_15),
+								.cin( inner_product6 ),
+								.cout( inner_product6_delay )
+							  );
+							  
+multiplier_control_system  multiplier_control_system14(
+					.clk(clk_sim),
+					.rst(rst_control),
+					.sta(done_sig_add16_300),
+					.x(inner_result11),
+					.y(inner_product6_delay),
+					
+					.xy(Pm_temp),
+					.done_sig(done_sig_multiplier305)
+										  );
+ComparePm_water  ComparePm1(
+			 .clk(clk_sim),
+			 .rst(rst_control),
+			 .rst_user(rst_user),
+			 .sta(done_sig_multiplier305),
+			 .x(Pm_temp),
+			 					 
+			 .y(Pm),
+			 .done_sig(done_sig_ComparePm307)
+		   );
+////////////////////below for Tm1_temp_stor/////////////////
+
+divider_control_system  div32_6(
+										.clk( clk_sim ),
+										.rst(rst_control),
+										.sta(done_sig_finish_wm169),
+										.x( constone ),
+										.y( wm ),
+										.xy( inv_wm ),
+										.done_sig(done_sig_diva_175)
+									  );
+									  
+									
+System_FIFO_32   FIFO_inv_wm_delay(
+								.clk( clk_sim ),
+								.rst(rst_control),
+								.rst_user(rst_user),
+								.before_enaread(done_sig_multiplier305),
+								.before_enawrite(done_sig_diva_175),
+								.cin( inv_wm ),
+								.cout( inv_wm_delay )
+							  );									 									 
+										 
+multiplier_control_system  multiplier_control_system15(
+					.clk(clk_sim),
+					.rst(rst_control),
+					.sta(done_sig_ComparePm307),
+					.x(Pm),
+					.y(inv_wm_delay),
+					
+					.xy(Tm_temp),
+					.done_sig(done_sig_Tm_temp_312)
+										  );											 
+									  
+assign Tm1_temp = {~Tm_temp[`SINGLE - 1],Tm_temp[`SINGLE - 2:0]};
+
+convert_single_to_double_control_system  single2float_abc(
+                                               .clk(clk_sim),
+															  .rst(rst_control),
+															  .sta(done_sig_Tm_temp_312),
+															  .x(Tm1_temp),
+															  .y(Tm1_temp_double),
+															  .done_sig(done_sig)
+															  );
+															  
+								  										 
+										 
+				
+endmodule						
+						

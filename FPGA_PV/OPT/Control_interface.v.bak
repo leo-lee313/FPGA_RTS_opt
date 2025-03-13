@@ -1,0 +1,89 @@
+`include "../parameter/Global_parameter.v"
+
+module Control_interface(
+								 clk,
+								 rst,
+								 sta,
+								 addr_input_v,
+								 pulse_input_v,
+								 ena_input_v,
+								 step_input_v,
+								 ena_cal_input_v, 
+
+								 V,
+								 addr_input_v_d,
+								 ena_cal_input_v_d,
+
+								 V_s,
+								 sta_c
+								);
+								
+input clk;
+input rst;
+input sta;
+
+output [`ADDR_WIDTH_INPUT_V - 1:0] addr_input_v;
+output pulse_input_v;
+output ena_input_v;
+output step_input_v;
+output ena_cal_input_v;
+
+output [31:0] V;
+output [`ADDR_WIDTH_INPUT_V - 1:0] addr_input_v_d;
+output ena_cal_input_v_d;
+
+output [31:0] V_s[`N_INPUT_V - 1:0];
+output sta_c;
+
+
+ADDR #(`ADDR_WIDTH_INPUT_V , `N_INPUT_V , `TIMES_INPUT_V , `INI_ADDR_INPUT_V ) ADDR_INPUT_V(
+																														  .clk(clk),
+																														  .rst(rst),
+																														  .sta(sta),
+																														  .addr(addr_input_v),
+																														  .pulse(pulse_input_v),
+																														  .ena_mem(ena_input_v),
+																														  .step(step_input_v),
+																														  .ena_cal(ena_cal_input_v)
+																														 );
+												
+Input_V	Input_V(
+					  .aclr(rst),
+					  .clock(clk),
+					  .data(`visual32),
+					  .enable(ena_input_v),
+					  .rdaddress(addr_input_v),
+					  .rden(ena_cal_input_v),
+					  .wraddress(addr_input_v),
+					  .wren(`sub),
+					  .q(V)
+					 );
+					 
+DELAY_NCLK #( 8 , 2 ) Delay_ADDR_INPUT_V_D(
+														 .clk(clk),
+														 .rst(rst),
+														 .d(addr_input_v),
+														 .q(addr_input_v_d)
+														);
+											 
+DELAY_1CLK #(2) Delay_ENA_CAL_INPUT_V_D(
+													  .clk(clk),
+													  .rst(rst),
+													  .d(ena_cal_input_v),
+													  .q(ena_cal_input_v_d)
+													 );
+													 
+DELAY_1CLK #(2) Delay_PULSE_INPUT_V_D(
+													.clk(clk),
+													.rst(rst),
+													.d(pulse_input_v),
+													.q(sta_c)
+												  );	
+											 
+always@ (posedge clk) begin
+	if(ena_cal_input_v_d) begin
+		V_s[addr_input_v_d] <= V;
+	end
+end
+
+endmodule

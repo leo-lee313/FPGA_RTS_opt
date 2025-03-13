@@ -1,0 +1,22 @@
+LPM_PIPELINE=1
+LPM_SIZE=13
+LPM_TYPE=LPM_MUX
+LPM_WIDTH=1
+LPM_WIDTHS=4
+DEVICE_FAMILY="Stratix V"
+clock
+data
+data
+data
+data
+data
+data
+data
+data
+data
+data
+data
+data
+data
+sel
+result

@@ -1,0 +1,8 @@
+set_global_assignment -name IP_TOOL_NAME "ALTFP_EXP"
+set_global_assignment -name IP_TOOL_VERSION "11.1"
+set_global_assignment -name VERILOG_FILE [file join $::quartus(qip_path) "Exp_nodsp.v"]
+set_global_assignment -name MISC_FILE [file join $::quartus(qip_path) "Exp_nodsp.bsf"]
+set_global_assignment -name MISC_FILE [file join $::quartus(qip_path) "Exp_nodsp_inst.v"]
+set_global_assignment -name MISC_FILE [file join $::quartus(qip_path) "Exp_nodsp_bb.v"]
+set_global_assignment -name MISC_FILE [file join $::quartus(qip_path) "Exp_nodsp.inc"]
+set_global_assignment -name MISC_FILE [file join $::quartus(qip_path) "Exp_nodsp.cmp"]

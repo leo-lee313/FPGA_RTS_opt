@@ -1,0 +1,183 @@
+`include "../parameter/Global_parameter.v"
+
+module PV(
+			 clk,
+			 rst,
+			 sta,
+			 S,
+			 T,
+			 Vd,
+			 
+			 Iph_inner_result1,
+			 Iph_inner_result2,
+			 Iph_inner_result3,
+			 Iph,
+			 Id_inner_result1,
+			 Id_inner_result2,
+			 Id_inner_result3,
+			 Id_inner_result4,
+			 
+			 address,
+			 address_1,
+			 address_2,
+
+			 Ids_1,
+			 Ids_2,
+			 Ids_delta, 
+
+			 address_float,
+			 delta_T,
+			 Ids_inner_result1,
+			 Ids,
+			 Id
+			);
+
+parameter ena_math = 1'b1;
+parameter sub = 1'b0;
+parameter add = 1'b1;
+
+parameter SINGLE = 32;
+parameter INTEGER = 10;
+parameter ADDR_Ids = 7;
+
+parameter Np_Isref_divide_Sref = 32'h3cf6fd22;
+parameter Np_Isref_J = 32'h3ca08af0;
+parameter Tref = 32'h43950000;
+
+parameter Ns_n_ff3 = 32'h3dbec56d;
+parameter const_1 = 32'h3f800000;
+			
+input clk;
+input rst;
+input sta;
+
+input [SINGLE - 1:0] S;
+input [SINGLE - 1:0] T;
+input [SINGLE - 1:0] Vd;
+
+output [SINGLE - 1:0] Iph_inner_result1;
+output [SINGLE - 1:0] Iph_inner_result2;
+output [SINGLE - 1:0] Iph_inner_result3;
+output [SINGLE - 1:0] Iph;
+
+output [SINGLE - 1:0] Id_inner_result1;
+output [SINGLE - 1:0] Id_inner_result2;
+output [SINGLE - 1:0] Id_inner_result3;
+output [SINGLE - 1:0] Id_inner_result4;
+
+output [INTEGER - 1:0] address;
+output [ADDR_Ids - 1:0] address_1;
+output [ADDR_Ids - 1:0] address_2;
+
+output [SINGLE - 1:0] Ids_1;
+output [SINGLE - 1:0] Ids_2;
+output [SINGLE - 1:0] Ids_delta;
+
+output [SINGLE - 1:0] address_float;
+output [SINGLE - 1:0] delta_T;
+output [SINGLE - 1:0] Ids_inner_result1;
+output [SINGLE - 1:0] Ids;
+output [SINGLE - 1:0] Id;
+
+Multiplier_nodsp Mutiplier_Iph_inner_result1(
+														   .aclr(rst),
+														   .clk_en(ena_math),
+														   .clock(clk),
+														   .dataa(S),
+														   .datab(Np_Isref_divide_Sref),
+														   .result(Iph_inner_result1)
+														  );
+
+Adder_nodsp	Adder_Iph_inner_result2(
+												.aclr(rst),
+												.add_sub(sub),
+												.clk_en(ena_math),
+												.clock(clk),
+												.dataa(T),
+												.datab(Tref),
+												.result(Iph_inner_result2)
+											  );
+												
+Multiplier_nodsp Mutiplier_Iph_inner_result3(
+														   .aclr(rst),
+														   .clk_en(ena_math),
+														   .clock(clk),
+														   .dataa(Iph_inner_result2),
+														   .datab(Np_Isref_J),
+														   .result(Iph_inner_result3)
+														  );
+												
+Adder_nodsp	Adder_Iph_inner_result4(
+												.aclr(rst),
+												.add_sub(add),
+												.clk_en(ena_math),
+												.clock(clk),
+												.dataa(Iph_inner_result1),
+												.datab(Iph_inner_result3),
+												.result(Iph)
+											  );
+
+Multiplier_nodsp Mutiplier_Id_inner_result1(
+														   .aclr(rst),
+														   .clk_en(ena_math),
+														   .clock(clk),
+														   .dataa(T),
+														   .datab(Ns_n_ff3),
+														   .result(Id_inner_result1)
+														  );
+
+Divide_nodsp	Divide_nodsp(
+									 .aclr(rst),
+									 .clk_en(ena_math),
+									 .clock(clk),
+									 .dataa(Vd),
+									 .datab(Id_inner_result1),
+									 .result(Id_inner_result2)
+									);
+
+Exp_nodsp	Exp_nodsp(
+							 .aclr(rst),
+							 .clk_en(ena_math),
+							 .clock(clk),
+							 .data(Id_inner_result2),
+							 .result(Id_inner_result3)
+							);
+
+Adder_nodsp	Adder_Id_inner_result4(
+												.aclr(rst),
+												.add_sub(sub),
+												.clk_en(ena_math),
+												.clock(clk),
+												.dataa(Id_inner_result3),
+												.datab(const_1),
+												.result(Id_inner_result4)
+											  );
+
+Ids_cal Ids_cal(
+					 .clk(clk),
+					 .rst(rst),
+					 .sta(sta),
+					 .T(T),
+					 .address(address),
+					 .address_1(address_1),
+					 .address_2(address_2),
+
+					 .Ids_1(Ids_1),
+					 .Ids_2(Ids_2),
+					 .Ids_delta(Ids_delta),
+
+					 .address_float(address_float),
+					 .delta_T(delta_T),
+					 .Ids_inner_result1(Ids_inner_result1),
+					 .Ids(Ids)
+					);
+
+Multiplier_nodsp Mutiplier_Id_inner_result5(
+														   .aclr(rst),
+														   .clk_en(ena_math),
+														   .clock(clk),
+														   .dataa(Ids),
+														   .datab(Id_inner_result4),
+														   .result(Id)
+														  );
+endmodule

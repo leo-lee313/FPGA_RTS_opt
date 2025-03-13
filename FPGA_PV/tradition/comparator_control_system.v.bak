@@ -1,0 +1,20 @@
+`include "../parameter/Global_parameter.v"
+
+module PWM(
+				clk,
+				rst,
+				rst_user,
+				sta,
+				sta_user,
+				curr_state,
+				next_state,
+				count_integer,
+				count_float,
+				triangle_out,
+				triangle_out_Amplitude,
+				end_STATE_I,
+				end_STATE_II,
+				end_STATE_III,
+				end_STATE_IV,
+				done_sig
+			  );

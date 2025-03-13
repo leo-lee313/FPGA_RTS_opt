@@ -1,0 +1,6 @@
+module outer_loop(
+						clk,
+						rst,
+						sta,
+						
+					  );

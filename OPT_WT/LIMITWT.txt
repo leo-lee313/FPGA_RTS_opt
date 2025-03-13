@@ -1,0 +1,17 @@
+0	J24_UP	0	J24_DOWM	1	24
+0	upper_limit_702_lyf	0	down_limit_703_lyf	1	31
+0	upper_limit_702_lyf	0	down_limit_703_lyf	1	32
+0	upper_limit_517_lyf	0	down_limit_518_lyf	1	36
+0	upper_limit_517_lyf	0	down_limit_518_lyf	1	37
+0	upper_limit_536_lyf	0	down_limit_537_lyf	1	39
+0	upper_limit_536_lyf	0	down_limit_537_lyf	1	40
+0	upper_limit_721_lyf	0	down_limit_722_lyf	1	62
+0	upper_limit_721_lyf	0	down_limit_722_lyf	1	63
+0	upper_limit_759_lyf	0	down_limit_760_lyf	1	65
+0	upper_limit_759_lyf	0	down_limit_760_lyf	1	66
+0	upper_limit_292_lyf	0	down_limit_293_lyf	1	72
+0	upper_limit_292_lyf	0	down_limit_293_lyf	1	73
+0	upper_limit_555_lyf	0	down_limit_556_lyf	1	86
+0	upper_limit_555_lyf	0	down_limit_556_lyf	1	87
+0	upper_limit_740_lyf	0	down_limit_741_lyf	1	89
+0	upper_limit_740_lyf	0	down_limit_741_lyf	1	90

@@ -1,0 +1,24 @@
+module dq02abc(
+					clk,
+					rst,
+					sta,
+					Vd,
+					Vq,
+					sin_theta,
+					cos_theta,
+					
+					inner_result_1,
+					inner_result_2,
+					inner_result_3,
+					inner_result_4,
+					inner_result_5,
+					inner_result_6,
+					inner_result_7,
+					inner_result_8,
+					inner_result_9,
+					inner_result_10,
+					inner_result_11,
+					Vd,
+					Vq,
+					done_sig
+					);

@@ -1,0 +1,47 @@
+`include "../parameter/Global_parameter.v"
+
+module Control_interface_output(
+										  clk,
+										  rst,
+										  sta,
+										  Sig_o,
+										  addr_output_signal_w,
+										  pulse_output_signal_w,
+										  ena_output_signal_w,
+										  step_output_signal_w,
+										  ena_cal_output_signal_w,
+										  gate_signal
+										 );
+										
+input clk;
+input rst;
+input sta;
+
+input Sig_o[`N_OUTPUT_SIGNAL - 1:0];
+
+output [`ADDR_WIDTH_OUTPUT_SIGNAL - 1:0] addr_output_signal_w;
+output pulse_output_signal_w;
+output ena_output_signal_w;
+output step_output_signal_w;
+output ena_cal_output_signal_w;
+output gate_signal;
+
+ADDR #(`ADDR_WIDTH_OUTPUT_SIGNAL , `N_OUTPUT_SIGNAL , `TIMES_OUTPUT_SIGNAL , `INI_ADDR_OUTPUT_SIGNAL ) ADDR_INPUT_V_w(
+																																							 .clk(clk),
+																																						    .rst(rst),
+																																						    .sta(sta),
+																																						    .addr(addr_output_signal_w),
+																																						    .pulse(pulse_output_signal_w),
+																																						    .ena_mem(ena_output_signal_w),
+																																						    .step(step_output_signal_w),
+																																						    .ena_cal(ena_cal_output_signal_w)
+																																						   );
+																																							
+always@ (posedge clk) begin
+	if(ena_cal_output_signal_w) begin
+		gate_signal <= Sig_o[addr_output_signal_w];
+	end
+end
+
+endmodule
+

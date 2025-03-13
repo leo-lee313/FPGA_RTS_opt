@@ -1,0 +1,33 @@
+`include "../parameter/global_parameter.v"
+module Freqdivising(			 		 
+			 sta_user,
+			 signal_in, 
+          signal_out			
+			);
+parameter constnumber=32'd10;			
+input sta_user;
+input signal_in;			
+output signal_out;
+reg signal_out1;
+reg [`SINGLE - 1:0] counter;
+
+always@(posedge sta_user or posedge signal_in)
+begin
+    if(sta_user==1'b1)
+	  begin
+	    signal_out1<=1'b0;
+		 counter<=32'd0;
+     end
+	 else if((signal_in==1'b1)&&(counter!=constnumber))
+	   begin
+		 counter<=counter+1;
+	    signal_out1<=1'b0;	 
+	   end
+    else	if((signal_in==1'b1)&&(counter==constnumber))	
+     begin
+	    signal_out1<=1'b1;
+		 counter<=32'd0; 
+     end
+end
+assign signal_out=signal_out1;
+endmodule

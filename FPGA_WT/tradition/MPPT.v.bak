@@ -1,0 +1,136 @@
+`include "../parameter/global_parameter.v"
+
+module MPPT(			 		 		 
+			 sta_user,
+			 sta_control,
+			 rst_control,
+			 clk_sim,
+			 wm, 
+          			 
+			 Pref,
+	       beta_flag,
+	       done_sig_MPPT		 
+			);
+		
+input sta_user;
+input sta_control;
+input rst_control;
+input clk_sim;
+input [`SINGLE - 1:0] wm;
+
+output [`SINGLE - 1:0] Pref;
+output beta_flag;
+output done_sig_MPPT;
+
+
+parameter consttwo=32'd4;
+parameter constfour=32'd6;
+//const1 is 3.5
+parameter const1 = 32'h40600000;
+//const2 is 30e3
+parameter const2 = 32'h46EA6000;
+parameter constone = 32'h3F800000;
+
+reg enable1;
+reg beta_flag1;
+
+wire [`SINGLE - 1:0] inner_product1;
+wire [`SINGLE - 1:0] inner_product2;
+wire [`SINGLE - 1:0] inner_product3;
+wire enable;
+wire agb_sig1;
+wire alb_sig1;
+wire done_sig_multiplier0;
+wire done_sig_multiplier1;
+wire done_sig_multiplier2;
+wire done_sig_delay1;
+wire done_sig_MPPT;
+wire done_sig_MPPT_temp;
+
+multiplier_control_system  multiplier_control_system0(
+					.clk(clk_sim),
+					.rst(rst_control),
+					.sta(sta_control),
+					.x(wm),
+					.y(wm),
+					
+					.xy(inner_product1),
+					.done_sig(done_sig_multiplier0)
+										  );
+multiplier_control_system  multiplier_control_system1(
+					.clk(clk_sim),
+					.rst(rst_control),
+					.sta(sta_control),
+					.x(const1),
+					.y(wm),
+					
+					.xy(inner_product2),
+					.done_sig(done_sig_multiplier1)
+										  );
+multiplier_control_system  multiplier_control_system2(
+					.clk(clk_sim),
+					.rst(rst_control),
+					.sta(done_sig_multiplier1),
+					.x(inner_product1),
+					.y(inner_product2),
+					
+					.xy(inner_product3),
+					.done_sig(done_sig_multiplier2)
+										  );
+										  
+divider_control_system  div32_1(
+										.clk(clk_sim),
+										.rst(rst_control),
+										.sta(done_sig_multiplier2),
+										.x( inner_product3 ),
+										.y( const2 ),
+										.xy( Pref ),
+										.done_sig(done_sig_delay1)
+									  );
+									  										 
+										 
+always @ ( posedge done_sig_delay1 or posedge rst_control ) begin	
+   if(rst_control)begin
+		enable1 <= 1'b0;
+		
+		end
+   else if( done_sig_delay1==1'b1 )begin
+		enable1 <= 1'b1;		
+		end
+end
+
+assign enable = enable1;
+										
+Comparator  FloatComparator_32_2(
+						.clk( clk_sim ),
+						.rst( rst_control ),
+						.sta(done_sig_delay1),
+						.input_1( Pref ),
+						.input_2( constone ),
+						.output_1( agb_sig1 ),
+						.output_2( alb_sig1 ),
+						.done_sig(done_sig_MPPT_temp)
+					  );																						 
+always @ ( posedge clk_sim or posedge rst_control ) begin	
+   if(rst_control)begin
+		beta_flag1 <= 1'b0;
+		
+		end
+   else if( agb_sig1==1'b1 )begin
+		beta_flag1 <= 1'b1;		
+		end
+	else begin
+		beta_flag1 <= 1'b0;		
+		end
+end
+
+assign beta_flag = beta_flag1;
+
+DELAY_1CLK #(1) Delay_DONE_SIG2(
+										  .clk(clk_sim),
+										  .rst(rst_control),
+										  .d(done_sig_MPPT_temp),
+										  .q(done_sig_MPPT)
+										 );
+
+endmodule
