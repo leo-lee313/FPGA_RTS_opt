@@ -1,9 +1,0 @@
-module abc2dq0(
-					clk,
-					rst,
-					Va,
-					Vb,
-					Vc,
-					Vd,
-					Vq
-				  )

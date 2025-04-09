@@ -1,5 +1,0 @@
-module Ids_cal(
-					clk,
-					rst,
-					sta,
-				  );
